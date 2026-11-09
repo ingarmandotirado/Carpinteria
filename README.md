@@ -1,0 +1,43 @@
+# Cuarto del bebé 3D
+
+Modelo 3D interactivo del cuarto del bebé, hecho a medida (three.js). Se abre en el navegador, también en el celular.
+
+**Ver en línea:** se publica con GitHub Pages desde `index.html` (Settings → Pages → rama `main`, carpeta `/`).
+
+## Medidas (m, desde piso terminado)
+
+| Elemento | Medida |
+|---|---|
+| Muro A (minisplit, de marco de puerta a esquina A–B) | 2.93 |
+| Muro B (a la derecha de A) | 2.98 |
+| Muro C (frente a A, incluye closet de 0.60) | 3.53 |
+| Muro D (frente a B: puerta 0.90 · divisorio 0.15 · closet 1.93) | 2.98 |
+| Altura | 2.82 |
+| Zoclo cerámico | 0 – 0.082 |
+| Recuadros de moldura (3 por muro en A y B, márgenes de 10 cm) | 0.182 – 0.87 · A 84.3 cm · B 86 cm |
+| Cenefa (remate = barandal de cuna = cubierta de cómoda) | 0.97 – 1.05 |
+| Ventanal en muro C (2 hojas iguales) | de 1.04 a 2.93 · alto 2.02 |
+| Closet: puertas / velicera | 0 – 2.10 / 2.10 – 2.82 |
+
+Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro superior beige mate `#D8C6A5` en los 4 muros.
+
+## Qué se puede hacer
+
+- Vistas: general, interior, muro A, muro B, esquina A–B, muro C, muro D.
+- Antes / después (molduras y pintura).
+- Tocar puerta, closet, cortinas y lámpara para abrir, cerrar, prender o apagar. Luz de techo desde el panel.
+- Editar muebles: mover arrastrando o con medidas en cm, girar, cambiar tipo, tamaño y color, duplicar, eliminar, deshacer/rehacer. Los muebles no se enciman. El diseño se guarda en el navegador y se puede copiar/pegar como texto.
+- Cuna Delta Children Royal 4 en 1 con cambiador (183 × 79.7 × 105 cm).
+
+## Cómoda a medida: despiece interactivo
+
+`comoda/index.html` calcula el despiece de la cómoda del muro B para el carpintero:
+
+- Altura total = altura de la moldura medida en obra − aire (base: 97 − 2 = 95 cm).
+- Frentes por fuera o al ras del marco, con separación entre frentes de 2 a 25 mm (con tiras de marco al ras cuando caben).
+- Filas, cajones por fila (igual o distinto en cada fila), altos y anchos de frentes, rieles, cierre y jaladera.
+- Mueble hasta el piso: zócalo al ras, metido o frente inferior hasta el piso; recorte abajo atrás para librar el zoclo.
+- Botón mm / pulgadas (fracciones de 1/16").
+- Armado 3D, explosión del mueble con la clave de cada pieza, alzado y corte con medidas.
+- Acabados pintado o madera (encino, maple, pino, nogal) con veta visible; el despiece indica en qué medida corre la veta.
+- PDF de fabricación con armado, explosión, planos, despiece, herrajes y notas.

@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+<title>Cómoda a medida · despiece</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: mesa de taller. Visor (armado / explosión / alzado / corte) fijo a la izquierda en escritorio y arriba en celular; a la derecha, medidas, criterios y despiece. */
+:root{
+  --paper:#EEF1F1; --sheet:#FAFBFB; --ink:#1D2A2E; --muted:#5E6E72; --line:rgba(29,42,46,.14);
+  --accent:#1F6F78; --accent-ink:#FFFFFF; --warn:#B4541A; --bad:#B3261E; --ok:#2E7D4F;
+  --dim:#B4541A; --chip:#FFFFFF;
+  --f-display:"Barlow Condensed","Arial Narrow",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Barlow",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#151B1D; --sheet:#1D2528; --ink:#E4ECEC; --muted:#93A4A8; --line:rgba(228,236,236,.14);
+    --accent:#5FB3BC; --accent-ink:#0F1A1C; --warn:#E39A62; --bad:#F08A80; --ok:#7CC79A; --dim:#E39A62; --chip:#243034;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#151B1D; --sheet:#1D2528; --ink:#E4ECEC; --muted:#93A4A8; --line:rgba(228,236,236,.14);
+  --accent:#5FB3BC; --accent-ink:#0F1A1C; --warn:#E39A62; --bad:#F08A80; --ok:#7CC79A; --dim:#E39A62; --chip:#243034;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;max-width:1320px;margin:0 auto;
+  padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}}
+header.top{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,5vw,36px);letter-spacing:.01em;margin:0;text-wrap:balance;line-height:1.05}
+.sub{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.hdr-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.viewer{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);align-self:start;background:var(--sheet);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+@media (max-width:900px){.viewer{position:relative;top:0}}
+.tabs{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{font:600 14px var(--f-display);letter-spacing:.04em;text-transform:uppercase;background:transparent;color:var(--muted);border:0;border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.stage{position:relative;height:min(62vh,600px);min-height:340px}
+@media (max-width:900px){.stage{height:52vh}}
+.stage>div{position:absolute;inset:0}
+#v3d{touch-action:none}
+#v3d canvas{display:block}
+.svgbox{overflow:auto;padding:10px}
+.svgbox svg{display:block;width:100%;height:100%;font-family:var(--f-mono)}
+.vbar{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:8px 10px;border-top:1px solid var(--line)}
+.vbar .note{font-size:12.5px;color:var(--muted);margin-left:auto}
+.vbar label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.vbar input[type=range]{width:120px;padding:0}
+.pinfo{flex-basis:100%;font-size:13px;min-height:1.4em}
+.pinfo b{font-family:var(--f-mono);font-weight:500}
+button.b{font:600 14px var(--f-body);color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;white-space:nowrap}
+button.b.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.b:disabled{opacity:.5;cursor:default}
+button:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:9px 11px;min-width:0}
+.kpi b{display:block;font:600 21px var(--f-mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi span{font:600 11.5px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+details.g{background:var(--sheet);border:1px solid var(--line);border-radius:12px}
+details.g>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:baseline;gap:10px}
+details.g>summary::-webkit-details-marker{display:none}
+details.g>summary h2{font:700 18px var(--f-display);letter-spacing:.03em;text-transform:uppercase;margin:0}
+details.g>summary small{color:var(--muted);font-size:13px;margin-left:auto;text-align:right}
+details.g>summary::after{content:"+";font:600 18px var(--f-mono);color:var(--muted)}
+details.g[open]>summary::after{content:"–"}
+.gbody{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+@media (max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
+label.f.wide{grid-column:1/-1}
+input,select{font:500 16px var(--f-mono);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:8px 9px;width:100%;min-width:0;font-variant-numeric:tabular-nums}
+select{font-family:var(--f-body)}
+input[type=range]{accent-color:var(--accent);border:0;background:transparent}
+label.chk{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:14px}
+label.chk input{width:auto}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:600 14px var(--f-body);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.seglbl{font:600 12px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.gaprow{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:10px;align-items:center}
+.rowsets{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.help{font-size:13px;color:var(--muted);margin:0}
+.msgs{display:flex;flex-direction:column;gap:6px}
+.msg{font-size:13.5px;padding:8px 11px;border-radius:9px;border:1px solid var(--line);background:var(--sheet)}
+.msg.warn{border-color:color-mix(in srgb,var(--warn) 45%,transparent);color:var(--warn)}
+.msg.bad{border-color:color-mix(in srgb,var(--bad) 45%,transparent);color:var(--bad);font-weight:600}
+.msg.ok{border-color:color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sheet);position:sticky;top:0}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.grp td{font:700 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase;background:var(--sheet);color:var(--accent)}
+tr.pick td{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.id{font:500 12px var(--f-mono);color:var(--muted)}
+ul.notes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px}
+.foot{grid-column:1/-1;color:var(--muted);font-size:12.5px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Cómoda a medida · despiece</h1>
+      <p class="sub">Cuarto del bebé, muro B. La cubierta queda abajo de la moldura (97–105 cm) y el mueble llega hasta el piso. Cambia los criterios y el despiece se recalcula.</p>
+    </div>
+    <div class="hdr-actions">
+      <div class="seg" id="s-units" role="group" aria-label="Unidades"></div>
+      <button class="b primary" id="pdfBtn">Generar PDF</button>
+    </div>
+  </header>
+
+  <section class="viewer" aria-label="Vista de la cómoda">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="armado">Armado 3D</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="explosion">Explosión</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="vfront">Alzado</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="vside">Corte</button>
+    </div>
+    <div class="stage">
+      <div id="v3d"></div>
+      <div id="vfront" class="svgbox" hidden></div>
+      <div id="vside" class="svgbox" hidden></div>
+    </div>
+    <div class="vbar" id="bar-armado">
+      <button class="b" id="openAll">Abrir cajones</button>
+      <button class="b" id="viewFront">De frente</button>
+      <button class="b" id="viewIso">3/4</button>
+      <span class="note">Toca un frente para abrir ese cajón.</span>
+    </div>
+    <div class="vbar" id="bar-ex" hidden>
+      <label for="exf">Separación <input id="exf" type="range" min="0" max="100" value="70"></label>
+      <label class="chk"><input id="exLabels" type="checkbox" checked> Etiquetas</label>
+      <button class="b" id="exFit">Centrar</button>
+      <span class="pinfo" id="pinfo">Toca una pieza para ver su clave y medidas. Las claves coinciden con el despiece.</span>
+    </div>
+    <div class="vbar" id="bar-svg" hidden><span class="note" id="svgnote">Cotas en mm. Desliza para ver todo el plano.</span></div>
+  </section>
+
+  <div class="col">
+    <div class="kpis" aria-live="polite">
+      <div class="kpi"><span>Altura total</span><b id="k-h">—</b></div>
+      <div class="kpi"><span>Aire bajo moldura</span><b id="k-air">—</b></div>
+      <div class="kpi"><span>Cajones</span><b id="k-n">—</b></div>
+      <div class="kpi"><span>Rieles</span><b id="k-sl">—</b></div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+
+    <details class="g" open>
+      <summary><h2>Medidas de obra</h2><small>se toman en el muro</small></summary>
+      <div class="gbody">
+        <div class="grid">
+          <label class="f">Altura de la moldura, parte de abajo (<span class="u">cm</span>)<input id="f-mold" type="number" inputmode="decimal" step="0.1"></label>
+          <label class="f">Aire bajo la moldura (<span class="u">cm</span>)<input id="f-hol" type="number" inputmode="decimal" step="0.1"></label>
+          <label class="f">Altura total que resulta<input id="f-H" type="text" readonly tabindex="-1"></label>
+          <label class="f">Ancho del mueble (<span class="u">cm</span>)<input id="f-W" type="number" inputmode="decimal" step="0.5"></label>
+          <label class="f">Fondo del mueble (<span class="u">cm</span>)<input id="f-D" type="number" inputmode="decimal" step="0.5"></label>
+        </div>
+        <p class="help">Mide la moldura justo donde va la cómoda. Altura total = altura de la moldura − aire. El fondo es el del cajón del mueble, sin contar frentes ni lo que sobresale la cubierta.</p>
+      </div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Cajones</h2><small id="sum-caj"></small></summary>
+      <div class="gbody">
+        <div><div class="seglbl">Cómo van los frentes</div><div class="seg" id="s-mount"></div></div>
+        <div><div class="seglbl">Filas de cajones</div><div class="seg" id="s-rows"></div></div>
+        <div><div class="seglbl">Cajones por fila</div><div class="seg" id="s-cmode"></div></div>
+        <div id="w-cols"><div class="seg" id="s-cols"></div></div>
+        <div id="w-rowcols" hidden><div class="seglbl">Cajones en cada fila (de arriba hacia abajo)</div><div class="rowsets" id="rowcols"></div></div>
+        <div><div class="seglbl">Alto de los frentes</div><div class="seg" id="s-hmode"></div></div>
+        <div id="w-rowh" hidden><div class="seglbl">Alto de cada frente, <span class="u">cm</span> (de arriba hacia abajo; el de abajo se ajusta solo)</div><div class="rowsets" id="rowh"></div></div>
+        <div id="w-wmode"><div class="seglbl">Ancho de los frentes</div><div class="seg" id="s-wmode"></div></div>
+        <div id="w-colw" hidden><div class="seglbl">Ancho de cada frente, <span class="u">cm</span> (de izquierda a derecha; el último se ajusta solo)</div><div class="rowsets" id="colw"></div></div>
+        <div>
+          <div class="seglbl">Separación entre frentes (<span class="ug">mm</span>)</div>
+          <div class="gaprow"><input id="f-gapR" type="range" min="2" max="25" step="0.5" aria-label="Separación entre frentes"><input id="f-gap" type="number" inputmode="decimal" step="0.5" aria-label="Separación entre frentes, valor"></div>
+          <p class="help" id="gapHelp"></p>
+        </div>
+        <div class="grid">
+          <label class="f" id="w-rev">Holgura alrededor de cada frente<select id="f-rev"><option value="1.5">1.5 mm</option><option value="2">2 mm</option><option value="3">3 mm</option></select></label>
+          <label class="f">Rieles<select id="f-slide">
+            <option value="lateral">A los lados (12.7 mm por lado)</option>
+            <option value="oculta">Ocultos abajo del cajón</option>
+          </select></label>
+          <label class="f">Cierre<select id="f-close">
+            <option value="suave">Cierre suave</option>
+            <option value="push">Empujar para abrir (sin jaladera)</option>
+            <option value="normal">Normal</option>
+          </select></label>
+          <label class="f">Jaladera<select id="f-pull">
+            <option value="boton">Botón</option>
+            <option value="barra">Barra</option>
+            <option value="ninguna">Ninguna</option>
+          </select></label>
+        </div>
+      </div>
+    </details>
+
+    <details class="g">
+      <summary><h2>Zócalo y cubierta</h2><small id="sum-base"></small></summary>
+      <div class="gbody">
+        <div><div class="seglbl">Parte de abajo (hasta el piso)</div><div class="seg" id="s-ztype"></div></div>
+        <div class="grid">
+          <label class="f">Alto del zócalo (<span class="u">cm</span>)<input id="f-z" type="number" inputmode="decimal" step="0.5"></label>
+          <label class="f" id="w-rem">Metido hacia adentro (<span class="u">cm</span>)<input id="f-rem" type="number" inputmode="decimal" step="0.5"></label>
+          <label class="f chk wide"><input id="f-dest" type="checkbox"> Sacar recorte abajo atrás en los laterales para librar el zoclo del muro</label>
+          <label class="f">Recorte: alto (<span class="u">cm</span>)<input id="f-dH" type="number" inputmode="decimal" step="0.1"></label>
+          <label class="f">Recorte: fondo (<span class="u">cm</span>)<input id="f-dD" type="number" inputmode="decimal" step="0.1"></label>
+        </div>
+        <div class="grid">
+          <label class="f">Grueso de la cubierta<select id="f-tc">
+            <option value="18">18 mm</option><option value="25">25 mm</option><option value="30">30 mm (2 de 15)</option><option value="36">36 mm (2 de 18)</option>
+          </select></label>
+          <label class="f">Sobresale al frente (<span class="u">cm</span>)<input id="f-vf" type="number" inputmode="decimal" step="0.1"></label>
+          <label class="f">Sobresale a los lados (<span class="u">cm</span>)<input id="f-vl" type="number" inputmode="decimal" step="0.1"></label>
+        </div>
+        <p class="help">Lo que sobresale al frente se mide desde la cara de los frentes. La cubierta va recta, sin moldura en el canto, y por detrás llega al muro.</p>
+      </div>
+    </details>
+
+    <details class="g">
+      <summary><h2>Materiales y acabado</h2><small id="sum-mat"></small></summary>
+      <div class="gbody">
+        <div class="grid">
+          <label class="f">Material<select id="f-mat">
+            <option value="MDF">MDF</option><option value="Triplay">Triplay</option><option value="Melamina">Melamina</option>
+          </select></label>
+          <label class="f">Mueble (mm)<select id="f-t"><option>15</option><option>16</option><option>18</option><option>19</option></select></label>
+          <label class="f">Frentes (mm)<select id="f-tf"><option>15</option><option>16</option><option>18</option><option>19</option></select></label>
+          <label class="f">Respaldo (mm)<select id="f-tb"><option>3</option><option>6</option><option>9</option></select></label>
+          <label class="f">Lados de cajón (mm)<select id="f-ts"><option>12</option><option>15</option><option>16</option></select></label>
+          <label class="f">Piso de cajón (mm)<select id="f-tfo"><option>3</option><option>6</option></select></label>
+        </div>
+        <div class="grid">
+          <label class="f">Acabado de frentes<select id="f-finF"><option value="pintado">Pintado</option><option value="madera">Madera</option></select></label>
+          <label class="f">Acabado de laterales<select id="f-finS"><option value="igual">Igual que los frentes</option><option value="pintado">Pintado</option><option value="madera">Madera</option></select></label>
+          <label class="f">Acabado de cubierta<select id="f-finC"><option value="madera">Madera</option><option value="pintado">Pintado</option></select></label>
+          <label class="f">Madera<select id="f-wood"><option value="encino">Encino claro</option><option value="maple">Maple</option><option value="pino">Pino</option><option value="nogal">Nogal</option></select></label>
+          <label class="f">Color de pintura<select id="f-colF"><option value="#F3EFE7">Blanco perla</option><option value="#BFC4C8">Gris</option><option value="#B5C2AA">Salvia</option><option value="#D8C6A5">Beige</option></select></label>
+          <label class="f chk"><input id="f-veta" type="checkbox"> Mostrar la veta</label>
+        </div>
+        <p class="help">Espesores comerciales en mm. Las medidas de corte no descuentan el canto; si el canto es de 2 mm, descuéntalo al cortar. Con madera, la columna “Veta” dice en qué medida corre la veta.</p>
+      </div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Despiece</h2><small id="sum-desp"></small></summary>
+      <div class="gbody">
+        <div class="tablewrap"><table id="cut"><thead></thead><tbody></tbody></table></div>
+        <p class="help" id="sheets"></p>
+        <div class="actions">
+          <button class="b primary" id="copy">Copiar despiece</button>
+          <button class="b" id="reset">Restablecer</button>
+        </div>
+        <textarea id="copyBox" rows="6" hidden aria-label="Despiece en texto"></textarea>
+        <p class="help" id="pdfMsg" hidden></p>
+      </div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Herrajes</h2></summary>
+      <div class="gbody"><div class="tablewrap"><table id="hw"><thead><tr><th>Herraje</th><th>Cant.</th><th>Qué pedir</th></tr></thead><tbody></tbody></table></div></div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Notas para el carpintero</h2></summary>
+      <div class="gbody"><ul class="notes" id="notes"></ul></div>
+    </details>
+  </div>
+  <p class="foot">Antes de cortar, verifica en obra la altura real de la moldura y que el piso esté nivelado.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+// ====================== Configuración (largos en cm, separación en mm) ======================
+const DEF={mold:97,hol:2,W:100,D:48,mount:'fuera',rows:3,cmode:'igual',cols:2,rowCols:[2,2,2],hmode:'graduadas',rowH:[],wmode:'iguales',colW:[],gap:3,rev:2,
+  slide:'lateral',close:'suave',pull:'boton',ztype:'ras',z:10,rem:4,dest:true,dH:9,dD:1.5,tc:25,vf:1.5,vl:1,
+  mat:'MDF',t:18,tf:18,tb:6,ts:15,tfo:6,finF:'pintado',finS:'igual',finC:'madera',wood:'encino',colF:'#F3EFE7',veta:true,units:'mm'};
+const KEY='comodaDespiece.v2';
+let cfg;
+try{cfg=Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){cfg=Object.assign({},DEF);}
+cfg.rowCols=[...(cfg.rowCols||[])]; cfg.rowH=[...(cfg.rowH||[])]; cfg.colW=[...(cfg.colW||[])];
+function save(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
+const SLIDES=[250,300,350,400,450,500,550];
+const mm=v=>Math.round(v), fl5=v=>Math.floor(v/5)*5, r1=v=>Math.round(v*10)/10;
+
+// ====================== Unidades ======================
+const IN=()=>cfg.units==='in';
+function frac(inches){ const neg=inches<0; let s=Math.round(Math.abs(inches)*16), w=Math.floor(s/16), f=s%16, d=16; while(f&&f%2===0){f/=2; d/=2;}
+  return (neg?'-':'')+(w||!f?w:'')+(f?(w?' ':'')+f+'/'+d:''); }
+const L=v=>IN()?frac(v/25.4):String(mm(v));                 // largo de pieza (sin unidad)
+const LU=v=>IN()?frac(v/25.4)+'"':mm(v)+' mm';                // con unidad
+const LK=v=>IN()?frac(v/25.4)+'"':(Math.round(v)/10).toFixed(1)+' cm';  // resumen
+const UL=()=>IN()?'pulg':'mm';
+const toUI=cm=>IN()?Math.round(cm/2.54*1000)/1000:cm, fromUI=v=>IN()?v*2.54:v;
+const gToUI=g=>IN()?Math.round(g/25.4*1000)/1000:g, gFromUI=v=>IN()?v*25.4:v;
+
+// ====================== Cálculo: geometría y piezas ======================
+function compute(c){
+  const t=+c.t, tf=+c.tf, tb=+c.tb, ts=+c.ts, tfo=+c.tfo, tc=+c.tc, g=+c.gap;
+  const inset=c.mount==='ras', r=inset?+c.rev:0;
+  const W=c.W*10, D=c.D*10, H=(c.mold-c.hol)*10, z=c.z*10, vf=c.vf*10, vl=c.vl*10;
+  const Hb=H-tc, y0=z+t, y1=Hb-t, Di=D-tb;
+  const msgs=[];
+  let ztype=c.ztype; if(inset&&ztype==='frente'){ztype='ras'; msgs.push(['warn','Con frentes al ras del marco el frente de abajo no puede bajar al piso; se usa zócalo al ras.']);}
+  const e=inset?0:Math.min(g/2,3);                 // orilla exterior (frentes por fuera)
+  const n=c.rows, colsOf=i=>c.cmode==='igual'?c.cols:(c.rowCols[i]||1);
+  const lw=inset?g-2*r:0, listones=inset&&lw>=8;   // tiras del marco entre cajones
+  const yT=inset?Hb-t-r:Hb-e;
+  const yBase=inset?z+t+r:(ztype==='ras'?z+g:z);
+  const extra=(!inset&&ztype==='frente')?z-10:0;
+  const Z=yT-yBase-g*(n-1);
+  let fh=[];
+  if(c.hmode==='iguales') fh=Array(n).fill(Z/n);
+  else if(c.hmode==='graduadas'){const w=[...Array(n)].map((_,i)=>Math.pow(1.15,i)), s=w.reduce((a,b)=>a+b,0); fh=w.map(v=>Z*v/s);}
+  else { for(let i=0;i<n-1;i++) fh.push((c.rowH[i]||Z/n/10)*10); fh.push(Z-fh.reduce((a,b)=>a+b,0)); }
+  fh=fh.map(v=>Math.round(v)); fh[n-1]+=Z-fh.reduce((a,b)=>a+b,0);
+  if(fh.some(v=>v<=0)) msgs.push(['bad','Los altos de los frentes no caben en la altura del mueble. Baja los altos que escribiste o la separación.']);
+  const fy=[]; {let y=yT; for(let i=0;i<n;i++){y-=fh[i]; fy.push(y); y-=g;}}
+  const frontH=fh.map((v,i)=>i===n-1?v+extra:v), frontY=fy.map((v,i)=>i===n-1?v-extra:v);
+  const bands=[]; for(let i=0;i<n;i++){const k=colsOf(i); if(bands.length&&bands[bands.length-1].cols===k) bands[bands.length-1].rows.push(i); else bands.push({cols:k,rows:[i]});}
+  const shelves=[]; for(let b=1;b<bands.length;b++){const i=bands[b].rows[0]; shelves.push(fy[i]+fh[i]+g/2);}
+  bands.forEach((b,bi)=>{b.top=bi===0?y1:shelves[bi-1]-t/2; b.bot=bi===bands.length-1?y0:shelves[bi]+t/2;});
+  function colLayout(k){
+    const x0=inset?t+r:e, AW=inset?W-2*t-2*r:W-2*e;
+    let wf;
+    if(c.cmode==='igual'&&c.wmode==='personal'&&k>1){ wf=[]; for(let j=0;j<k-1;j++) wf.push((c.colW[j]||W/k/10)*10); wf.push(AW-g*(k-1)-wf.reduce((a,b)=>a+b,0)); }
+    else wf=Array(k).fill((AW-g*(k-1))/k);
+    wf=wf.map(v=>Math.round(v*2)/2);
+    const xs=[]; let x=x0; wf.forEach(w=>{xs.push(x); x+=w+g;});
+    const axes=[]; for(let j=1;j<k;j++) axes.push(xs[j]-g/2);
+    const lims=[t,...axes,W-t], inner=[];
+    for(let j=0;j<k;j++){const a=j===0?t:lims[j]+t/2, b=j===k-1?W-t:lims[j+1]-t/2; inner.push({x0:a,x1:b,w:b-a});}
+    return {wf,xs,axes,inner};
+  }
+  bands.forEach(b=>{b.L=colLayout(b.cols); if(b.L.wf.some(v=>v<=50)) msgs.push(['bad','Los anchos de los frentes no caben en el ancho del mueble.']);});
+  const depthAvail=inset?Di-tf:Di;
+  const Ls=[...SLIDES].reverse().find(s=>s<=depthAvail-10)||0;
+  if(!Ls) msgs.push(['bad','El mueble es muy poco profundo para rieles comunes (necesita al menos 26 cm por dentro).']);
+  const frontZ=inset?D-tf:D, boxZ=frontZ-Ls;
+  const drawers=[], clear=c.slide==='lateral'?25.4:10;
+  bands.forEach(b=>b.rows.forEach(i=>{
+    const top=Math.min(frontY[i]+frontH[i]-20,i===b.rows[0]?b.top-5:Infinity);
+    const by=Math.max(frontY[i]+15,i===b.rows[b.rows.length-1]?b.bot+5:-Infinity);
+    const hb=fl5(top-by);
+    for(let j=0;j<b.cols;j++){const op=b.L.inner[j], bw=Math.floor((op.w-clear)*2)/2;
+      drawers.push({row:i,col:j,fx:b.L.xs[j],fw:b.L.wf[j],fy:frontY[i],fh:frontH[i],bx:op.x0+clear/2,bw,by,hb,L:Ls,ow:op.w,cols:b.cols,band:b});}
+  }));
+  drawers.forEach(d=>{
+    if(d.hb<60) msgs.push(['bad',`La caja del cajón de la fila ${d.row+1} queda de ${LU(d.hb)} de alto; lo mínimo útil son 6 cm. Sube ese frente o quita una fila.`]);
+    else if(d.fh<110) msgs.push(['warn',`El frente de la fila ${d.row+1} mide ${LU(d.fh)} de alto; menos de 11 cm se ve delgado y guarda poco.`]);
+    if(d.ow<200) msgs.push(['warn',`Un cajón queda con hueco de ${LU(d.ow)} de ancho; menos de 20 cm es poco práctico.`]);});
+  if(c.hol<1.5) msgs.push(['warn','Con menos de 1.5 cm de aire bajo la moldura, cualquier desnivel se nota como error.']);
+  if(c.hol>4) msgs.push(['warn','Con más de 4 cm de aire bajo la moldura ya no se ve como una línea alineada.']);
+  if(c.hol<=0) msgs.push(['bad','La cubierta queda arriba de la moldura: la parte trasera chocaría con ella.']);
+  if(c.dest&&c.dH*10>z) msgs.push(['warn','El recorte para el zoclo es más alto que el zócalo: sube el zócalo o baja el recorte.']);
+  if(!inset&&g>6) msgs.push(['warn',`Con frentes por fuera y ${LU(g)} de separación se verá el mueble entre los frentes. Para que se vea un marco parejo, usa “Al ras del marco”.`]);
+  if(inset&&g>=4&&!listones) msgs.push(['warn','Con esta separación no cabe tira de marco entre cajones: se verá una ranura (sombra) entre frentes.']);
+  const seen=new Set(), out=[]; msgs.forEach(m=>{if(!seen.has(m[1])){seen.add(m[1]); out.push(m);}});
+  if(!out.some(m=>m[0]==='bad')) out.unshift(['ok',`Cubierta a ${LK(H)} del piso: ${LK(c.mold*10-H)} abajo de la moldura. Queda ${LK(Math.abs(H-920))} ${H>=920?'arriba':'abajo'} del cambiador de la cuna (92 cm).`]);
+  const R={t,tf,tb,ts,tfo,tc,g,e,r,inset,listones,lw,W,D,H,z,vf,vl,Hb,y0,y1,Di,n,fh:frontH,fy:frontY,bands,shelves,L:Ls,frontZ,boxZ,drawers,ztype,msgs:out,c};
+  R.pieces=makePieces(R);
+  return R;
+}
+
+// Cada pieza: datos de corte + cajas 3D (mm) + desplazamiento en explosión
+function makePieces(R){
+  const {t,tf,tb,ts,tfo,tc,W,D,Hb,z,vf,vl,Di,c,inset,listones,lw,r,frontZ}=R, P=[];
+  const dH=c.dest?c.dH*10:0, dD=c.dest?c.dD*10:0;
+  const add=o=>{P.push(Object.assign({canto:'',note:'',role:'in',veta:null},o)); return o;};
+  const B=(x,y,z,w,h,d)=>({x,y,z,w,h,d});
+  const shelfD=listones?Di-tf:Di;
+  const fr=inset?'side':'in';   // con frentes al ras, piso, tira de adelante, repisas y separadores se ven: llevan el acabado de los laterales
+  [0,1].forEach(s=>{const x=s?W-t:0;
+    add({grp:'Cuerpo',name:'Lateral',a:Hb,b:Di,e:t,canto:'canto al frente',role:'side',grain:'y',veta:Hb,
+      note:`Llega al piso.${c.dest?` Sacar recorte abajo atrás para el zoclo: ${LU(dH)} de alto × ${LU(dD)} de fondo.`:''}`,
+      boxes:c.dest?[B(x,dH,tb,t,Hb-dH,Di),B(x,0,tb+dD,t,dH,Di-dD)]:[B(x,0,tb,t,Hb,Di)],ex:[s?320:-320,0,0]});});
+  add({grp:'Cuerpo',name:'Piso del mueble',a:W-2*t,b:Di,e:t,canto:'canto al frente',role:fr,grain:'x',note:`Va entre los laterales; su cara de arriba queda a ${LU(z+t)} del suelo.`,boxes:[B(t,z,tb,W-2*t,t,Di)],ex:[0,-160,0]});
+  add({grp:'Cuerpo',name:'Tira de amarre arriba',a:W-2*t,b:100,e:t,canto:'canto al frente (la de adelante)',role:fr,grain:'x',note:'Una adelante y otra atrás. Aquí se atornilla la cubierta.',boxes:[B(t,Hb-t,D-100,W-2*t,t,100)],ex:[0,200,120]});
+  add({grp:'Cuerpo',name:'Tira de amarre arriba',a:W-2*t,b:100,e:t,canto:'canto al frente (la de adelante)',grain:'x',note:'Una adelante y otra atrás. Aquí se atornilla la cubierta.',boxes:[B(t,Hb-t,tb,W-2*t,t,100)],ex:[0,200,-120]});
+  R.shelves.forEach(y=>add({grp:'Cuerpo',name:'Repisa divisoria',a:W-2*t,b:shelfD,e:t,canto:listones?'':'canto al frente',role:listones?'in':fr,grain:'x',note:`Su centro va a ${LU(y)} del suelo.`,boxes:[B(t,y-t/2,tb,W-2*t,t,shelfD)],ex:[0,0,160]}));
+  R.bands.forEach(b=>b.L.axes.forEach(ax=>add({grp:'Cuerpo',name:'Separador vertical',a:b.top-b.bot,b:shelfD,e:t,canto:listones?'':'canto al frente',role:listones?'in':fr,grain:'y',
+    note:`Su centro va a ${LU(ax)} del lateral izquierdo.`,boxes:[B(ax-t/2,b.bot,tb,t,b.top-b.bot,shelfD)],ex:[0,0,220]})));
+  add({grp:'Cuerpo',name:'Respaldo',a:W,b:Hb-z,e:tb,grain:'y',note:`Se clava y pega por detrás, desde ${LU(z)} hacia arriba.`,boxes:[B(0,z,0,W,Hb-z,tb)],ex:[0,0,-380]});
+  if(R.ztype==='ras'){
+    if(inset){ add({grp:'Zócalo',name:'Tapa del zócalo (frente)',a:W-2*t,b:z-2,e:tf,canto:'arriba',role:'front',grain:'x',veta:W-2*t,note:'Va entre los laterales, al ras del frente del mueble, a 2 mm del suelo.',boxes:[B(t,2,D-tf,W-2*t,z-2,tf)],ex:[0,-170,420]});
+      add({grp:'Zócalo',name:'Refuerzo del zócalo (frente)',a:W-2*t,b:z,e:t,grain:'x',note:'Detrás de la tapa. Aquí van las patas niveladoras.',boxes:[B(t,0,D-tf-t,W-2*t,z,t)],ex:[0,-170,200]}); }
+    else { add({grp:'Zócalo',name:'Tapa del zócalo (frente)',a:W-2*R.e,b:z-2,e:tf,canto:'arriba y lados',role:'front',grain:'x',veta:W-2*R.e,note:'Por fuera, al ras de los frentes, a 2 mm del suelo.',boxes:[B(R.e,2,D,W-2*R.e,z-2,tf)],ex:[0,-170,420]});
+      add({grp:'Zócalo',name:'Refuerzo del zócalo (frente)',a:W-2*t,b:z,e:t,grain:'x',note:'Detrás de la tapa. Aquí van las patas niveladoras.',boxes:[B(t,0,D-t,W-2*t,z,t)],ex:[0,-170,200]}); }
+  }else if(R.ztype==='remetido'){
+    add({grp:'Zócalo',name:'Zócalo (frente)',a:W-2*t,b:z,e:t,canto:'canto al frente',role:'front',grain:'x',veta:W-2*t,note:`Metido ${LU(c.rem*10)} hacia adentro. Aquí van las patas niveladoras.`,boxes:[B(t,0,D-c.rem*10-t,W-2*t,z,t)],ex:[0,-170,300]});
+  }else add({grp:'Zócalo',name:'Refuerzo del zócalo (frente)',a:W-2*t,b:z-10,e:t,grain:'x',note:'Queda escondido detrás del frente de abajo. Aquí van las patas niveladoras.',boxes:[B(t,10,D-t,W-2*t,z-10,t)],ex:[0,-170,200]});
+  add({grp:'Zócalo',name:'Refuerzo del zócalo (atrás)',a:W-2*t,b:z,e:t,grain:'x',note:c.dest?`Va ${LU(dD)} adelante del canto de atrás, para dejar libre el recorte del zoclo.`:'',boxes:[B(t,0,tb+dD,W-2*t,z,t)],ex:[0,-170,-200]});
+  const cw=W+2*vl, cd=(inset?D:D+tf)+vf;
+  add({grp:'Cubierta',name:'Cubierta',a:cw,b:cd,e:tc,canto:'frente y 2 lados',role:'top',grain:'x',veta:cw,
+    note:'Canto recto, sin moldura.'+(tc===30?' Se hace con 2 tablas de 15 mm pegadas.':tc===36?' Se hace con 2 tablas de 18 mm pegadas.':''),boxes:[B(-vl,Hb,0,cw,tc,cd)],ex:[0,420,0]});
+  if(listones){
+    for(let i=0;i<R.n-1;i++){const yc=R.fy[i]-R.g/2;
+      add({grp:'Marco',name:'Tira horizontal del marco',a:W-2*t,b:lw,e:tf,canto:'canto al frente',role:'front',grain:'x',veta:W-2*t,note:`Entre las filas ${i+1} y ${i+2}; su centro a ${LU(yc)} del suelo, al ras de los frentes.`,boxes:[B(t,yc-lw/2,D-tf,W-2*t,lw,tf)],ex:[0,0,300]});}
+    R.drawers.filter(d=>d.col>0).forEach(d=>{const ax=d.fx-R.g/2, y0=d.fy-r, h=d.fh+2*r;
+      add({grp:'Marco',name:'Tira vertical del marco',a:h,b:lw,e:tf,canto:'canto al frente',role:'front',grain:'y',veta:h,note:`Fila ${d.row+1}; su centro a ${LU(ax)} del lateral izquierdo.`,boxes:[B(ax-lw/2,y0,D-tf,lw,h,tf)],ex:[0,0,300]});});
+  }
+  R.drawers.forEach((d,i)=>{
+    const lift=(R.n-1-d.row)*130, side=(d.col-(d.cols-1)/2)*140, fwd=d.L+380;
+    add({grp:'Frentes',name:'Frente de cajón',a:d.fw,b:d.fh,e:tf,canto:'4 lados',role:'front',grain:'x',veta:d.fw,drawer:i,row:d.row,
+      note:(R.ztype==='frente'&&d.row===R.n-1&&!inset?'Baja hasta 1 cm del suelo. ':''),boxes:[B(d.fx,d.fy,frontZ,d.fw,d.fh,tf)],ex:[side,lift,fwd+260]});
+    const bx=d.bx,bz=R.boxZ;
+    [0,1].forEach(s=>add({grp:'Cajones',name:'Lado de cajón',a:d.L,b:d.hb,e:ts,canto:'arriba',grain:'z',drawer:i,row:d.row,note:`Ranura de ${LU(tfo)} a 1 cm de abajo, para meter el piso del cajón.`,
+      boxes:[B(s?bx+d.bw-ts:bx,d.by,bz,ts,d.hb,d.L)],ex:[side+(s?90:-90),lift,fwd]}));
+    add({grp:'Cajones',name:'Tapa delantera y trasera de la caja',a:d.bw-2*ts,b:d.hb,e:ts,canto:'arriba',grain:'x',drawer:i,row:d.row,note:`La caja completa mide ${LU(d.bw)} de ancho por fuera.`,boxes:[B(bx+ts,d.by,bz+d.L-ts,d.bw-2*ts,d.hb,ts)],ex:[side,lift,fwd+110]});
+    add({grp:'Cajones',name:'Tapa delantera y trasera de la caja',a:d.bw-2*ts,b:d.hb,e:ts,canto:'arriba',grain:'x',drawer:i,row:d.row,note:`La caja completa mide ${LU(d.bw)} de ancho por fuera.`,boxes:[B(bx+ts,d.by,bz,d.bw-2*ts,d.hb,ts)],ex:[side,lift,fwd-110]});
+    add({grp:'Cajones',name:'Piso del cajón',a:d.bw-2*ts+12,b:d.L-2*ts+12,e:tfo,grain:'x',drawer:i,row:d.row,note:'Entra 6 mm en la ranura de cada lado.',boxes:[B(bx+ts,d.by+10,bz+ts,d.bw-2*ts,tfo,d.L-2*ts)],ex:[side,lift-90,fwd]});
+  });
+  const GID={Cuerpo:'C',Zócalo:'Z',Cubierta:'T',Marco:'M',Frentes:'F',Cajones:'K'};
+  const rows=[], idx={}, byKey={};
+  P.forEach(p=>{p.a=mm(p.a); p.b=mm(p.b); const big=Math.max(p.a,p.b), small=Math.min(p.a,p.b);
+    const k=[p.grp,p.name,big,small,p.e].join('|');
+    let row=byKey[k]; if(!row){idx[p.grp]=(idx[p.grp]||0)+1; row=byKey[k]={id:GID[p.grp]+idx[p.grp],grp:p.grp,name:p.name,A:big,B:small,e:p.e,q:0,canto:p.canto,notes:new Set(),rows:new Set(),veta:p.veta!=null?mm(p.veta):null,role:p.role}; rows.push(row);}
+    row.q++; if(p.note) row.notes.add(p.note); if(p.row!=null) row.rows.add(p.row+1); p.id=row.id;});
+  rows.forEach(rw=>{let note=[...rw.notes]; if(rw.grp==='Frentes'||rw.grp==='Cajones') note=[`Fila ${[...rw.rows].join(', ')}.`,...note];
+    if(rw.name==='Separador vertical'&&note.length>1) note=['Centros a '+note.map(s=>s.replace('Su centro va a ','').replace(' del lateral izquierdo.','')).join(', ')+' del lateral izquierdo.'];
+    if(rw.name==='Tira vertical del marco'&&note.length>1) note=[note.join(' ')];
+    rw.note=note.join(' ');});
+  const ORD=Object.keys(GID); rows.sort((x,y)=>ORD.indexOf(x.grp)-ORD.indexOf(y.grp));   // agrupa por tipo de pieza
+  R.rows=rows;
+  return P;
+}
+function hardware(R){
+  const c=R.c, N=R.drawers.length, H=[];
+  H.push(['Rieles de cajón (juegos)',N,`De ${LU(R.L)} de largo, extensión total, ${c.slide==='lateral'?'se atornillan a los lados del cajón (dejan 12.7 mm por lado)':'ocultos abajo del cajón'}${c.close==='suave'?', con cierre suave':c.close==='push'?', con sistema de empujar para abrir':''}.`]);
+  if(c.close!=='push'&&c.pull!=='ninguna'){const q=R.drawers.reduce((a,d)=>a+(c.pull==='boton'&&d.fw>600?2:1),0); H.push(['Jaladeras',q,c.pull==='boton'?'Botón. Si el frente mide más de 60 cm, van 2, cada una a 1/4 del ancho.':'Barra centrada, de 128 a 160 mm entre tornillos.']);}
+  H.push(['Patas niveladoras ocultas',R.W>1000?6:4,'Se atornillan al refuerzo del zócalo y se ajustan desde adentro (15 a 20 mm de ajuste).']);
+  H.push(['Correa para fijar al muro',R.W>1000?2:1,'Evita que el mueble se vaya hacia adelante. Va a un taquete de carga o montante, abajo de la moldura.']);
+  H.push(['Escuadras para la cubierta',8,'Se atornillan por abajo, desde las tiras de amarre. No quedan tornillos a la vista.']);
+  H.push(['Topes de cajón',N,'Para que el cajón no se salga completo (si el riel no lo trae).']);
+  return H;
+}
+function notes(R){
+  const c=R.c, wood=hasWood();
+  const N=[
+    `Altura total: ${LK(R.H)} del suelo a la parte de arriba de la cubierta. Queda ${LK(c.mold*10-R.H)} abajo de la moldura. Antes de cortar, mide la moldura justo donde va la cómoda.`,
+    'Al instalar, nivela la cubierta (no el piso) para que el aire con la moldura quede parejo de lado a lado.',
+    c.dest?`En los dos laterales, saca un recorte abajo atrás de ${LU(c.dH*10)} de alto × ${LU(c.dD*10)} de fondo, para que el mueble pase sobre el zoclo y quede pegado al muro.`:'Sin recorte para el zoclo: el mueble queda separado del muro lo que sobresale el zoclo (aprox. 1 cm).',
+    R.inset?`Los frentes van metidos en el mueble, al ras del marco. Deja ${LU(R.r)} de holgura alrededor de cada frente.${R.listones?` Entre cajones van tiras de marco de ${LU(R.lw)} de ancho, al ras de los frentes.`:''}`:`Los frentes van por fuera y tapan el mueble. Separación entre frentes: ${LU(R.g)}; en las orillas: ${LU(R.e)}.`,
+    c.slide==='lateral'?'Rieles a los lados: la caja del cajón mide justo el hueco menos 25.4 mm (12.7 mm por lado). Mejor 1 mm menos que 1 mm más.':'Rieles ocultos: antes de cortar las cajas, revisa la medida que pide el fabricante del riel.',
+    'La cubierta va recta, sin moldura en el canto, y sobresale al frente y a los lados. No lleva colchoneta de cambio: el cambiador ya está en la cuna.',
+    'Seguridad: fija el mueble al muro con la correa y pon topes a los cajones. Usa pintura o barniz bajo en olor (bajo VOC).'];
+  if(wood) N.splice(5,0,'Veta: en frentes, cubierta, tapa del zócalo y tiras horizontales va acostada; en laterales y tiras verticales va parada. La columna “Veta” dice en qué medida corre.');
+  return N;
+}
+
+// ====================== UI: controles ======================
+function seg(id,opts,key,after){
+  const el=$(id); el.innerHTML='';
+  opts.forEach(([v,lab])=>{const b=document.createElement('button'); b.type='button'; b.textContent=lab; b.setAttribute('aria-pressed',String(cfg[key]==v));
+    b.onclick=()=>{cfg[key]=typeof DEF[key]==='number'?+v:v; if(after)after(); update();}; el.appendChild(b);});
+}
+const NUM=['mold','hol','W','D','z','rem','dH','dD','vf','vl'];
+const SEL=['slide','close','pull','tc','mat','t','tf','tb','ts','tfo','finF','finS','finC','wood','colF','rev'];
+function fillNums(){NUM.forEach(k=>{const el=$('f-'+k); if(document.activeElement!==el) el.value=toUI(cfg[k]); el.step=IN()?'0.0625':(['W','D','z','rem'].includes(k)?'0.5':'0.1');});
+  document.querySelectorAll('.u').forEach(s=>s.textContent=IN()?'pulg':'cm'); document.querySelectorAll('.ug').forEach(s=>s.textContent=IN()?'pulg':'mm');
+  const gi=$('f-gap'); if(document.activeElement!==gi) gi.value=gToUI(cfg.gap); $('f-gapR').value=cfg.gap; gi.step=IN()?'0.02':'0.5';}
+NUM.forEach(k=>{const el=$('f-'+k); el.addEventListener('input',()=>{const v=parseFloat(String(el.value).replace(',','.')); if(isFinite(v)){cfg[k]=fromUI(v); update(false);}}); el.addEventListener('blur',fillNums);});
+SEL.forEach(k=>{const el=$('f-'+k); el.value=String(cfg[k]); el.addEventListener('change',()=>{cfg[k]=typeof DEF[k]==='number'?+el.value:el.value; update();});});
+$('f-dest').checked=cfg.dest; $('f-dest').addEventListener('change',()=>{cfg.dest=$('f-dest').checked; update();});
+$('f-veta').checked=cfg.veta; $('f-veta').addEventListener('change',()=>{cfg.veta=$('f-veta').checked; update();});
+$('f-gapR').addEventListener('input',()=>{cfg.gap=+$('f-gapR').value; $('f-gap').value=gToUI(cfg.gap); update(false);});
+$('f-gap').addEventListener('input',()=>{const v=parseFloat(String($('f-gap').value).replace(',','.')); if(isFinite(v)){cfg.gap=Math.min(25,Math.max(2,gFromUI(v))); $('f-gapR').value=cfg.gap; update(false);}});
+$('f-gap').addEventListener('blur',fillNums);
+
+function rebuildSegs(){
+  seg('s-units',[['mm','mm'],['in','Pulgadas']],'units',()=>{['rowh','colw'].forEach(id=>$(id).dataset.k='');});
+  seg('s-mount',[['fuera','Por fuera (tapan el mueble)'],['ras','Al ras del marco (metidos)']],'mount');
+  seg('s-rows',[[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6']],'rows',()=>{cfg.rowH=[];});
+  seg('s-cmode',[['igual','Igual en todas las filas'],['fila','Distinto en cada fila']],'cmode');
+  seg('s-cols',[[1,'1'],[2,'2'],[3,'3'],[4,'4']],'cols',()=>{cfg.colW=[];});
+  seg('s-hmode',[['iguales','Iguales'],['graduadas','Más altos abajo'],['personal','Escribirlos']],'hmode');
+  seg('s-wmode',[['iguales','Iguales'],['personal','Escribirlos']],'wmode');
+  seg('s-ztype',[['ras','Zócalo al ras de los frentes'],['remetido','Zócalo metido'],['frente','El frente de abajo llega al piso']],'ztype');
+}
+function dynFields(R){
+  $('w-cols').hidden=cfg.cmode!=='igual'; $('w-rowcols').hidden=cfg.cmode!=='fila';
+  $('w-wmode').hidden=cfg.cmode!=='igual'||cfg.cols<2; $('w-colw').hidden=$('w-wmode').hidden||cfg.wmode!=='personal';
+  $('w-rowh').hidden=cfg.hmode!=='personal'; $('w-rem').hidden=R.ztype!=='remetido'; $('w-rev').hidden=!R.inset;
+  $('gapHelp').textContent=R.inset?(R.listones?`Entre cajones queda una tira de marco de ${LU(R.lw)} al ras de los frentes, con ${LU(R.r)} de holgura de cada lado.`:'Separación chica: queda solo una ranura entre frentes, sin tira de marco.'):`Separación entre frentes de ${LU(R.g)}. En las orillas quedan ${LU(R.e)}.`;
+  const rc=$('rowcols'); if(rc.dataset.k!==String(cfg.rows)){ rc.innerHTML=''; rc.dataset.k=cfg.rows;
+    for(let i=0;i<cfg.rows;i++){const l=document.createElement('label'); l.className='f'; l.textContent=`Fila ${i+1}`; const s=document.createElement('select'); s.id='rc-'+i;
+      [1,2,3,4].forEach(v=>{const o=document.createElement('option'); o.value=v; o.textContent=v+(v===1?' cajón':' cajones'); s.appendChild(o);});
+      s.value=cfg.rowCols[i]||2; s.onchange=()=>{cfg.rowCols[i]=+s.value; update();}; l.appendChild(s); rc.appendChild(l);} }
+  const rh=$('rowh'), kH=cfg.rows+'|'+cfg.hmode+'|'+cfg.units;
+  if(rh.dataset.k!==kH){ rh.innerHTML=''; rh.dataset.k=kH;
+    for(let i=0;i<cfg.rows;i++){const l=document.createElement('label'); l.className='f'; l.textContent=`Fila ${i+1}`+(i===cfg.rows-1?' (sola)':''); const inp=document.createElement('input'); inp.type='number'; inp.step=IN()?'0.0625':'0.1'; inp.inputMode='decimal'; inp.id='rh-'+i;
+      if(i===cfg.rows-1){inp.readOnly=true; inp.tabIndex=-1;} else inp.oninput=()=>{const v=parseFloat(inp.value); if(isFinite(v)){cfg.rowH[i]=fromUI(v); update(false);}};
+      l.appendChild(inp); rh.appendChild(l);} }
+  for(let i=0;i<cfg.rows;i++){const inp=$('rh-'+i); if(inp&&document.activeElement!==inp){const cmv=R.fh[i]/10-(i===cfg.rows-1&&R.ztype==='frente'&&!R.inset?(R.z-10)/10:0); inp.value=toUI(r1(cmv)); if(i<cfg.rows-1) cfg.rowH[i]=r1(cmv);}}
+  const cw=$('colw'), kW=cfg.cols+'|'+cfg.wmode+'|'+cfg.units;
+  if(cw.dataset.k!==kW){ cw.innerHTML=''; cw.dataset.k=kW;
+    for(let j=0;j<cfg.cols;j++){const l=document.createElement('label'); l.className='f'; l.textContent=`Frente ${j+1}`+(j===cfg.cols-1?' (solo)':''); const inp=document.createElement('input'); inp.type='number'; inp.step=IN()?'0.0625':'0.1'; inp.inputMode='decimal'; inp.id='cw-'+j;
+      if(j===cfg.cols-1){inp.readOnly=true; inp.tabIndex=-1;} else inp.oninput=()=>{const v=parseFloat(inp.value); if(isFinite(v)){cfg.colW[j]=fromUI(v); update(false);}};
+      l.appendChild(inp); cw.appendChild(l);} }
+  if(cfg.cmode==='igual'){const Lw=R.bands[0].L; for(let j=0;j<cfg.cols;j++){const inp=$('cw-'+j); if(inp&&document.activeElement!==inp){inp.value=toUI(r1(Lw.wf[j]/10)); if(j<cfg.cols-1) cfg.colW[j]=r1(Lw.wf[j]/10);}}}
+}
+
+// ====================== Resultados ======================
+let lastText='', current=null;
+function hasWood(){return [cfg.finF,cfg.finS==='igual'?cfg.finF:cfg.finS,cfg.finC].includes('madera');}
+function renderTables(R){
+  const wood=hasWood();
+  $('cut').querySelector('thead').innerHTML=`<tr><th>Clave</th><th>Pieza</th><th>Cant.</th><th>Largo × ancho (${UL()})</th><th>Grueso</th>${wood?'<th>Veta</th>':''}<th>Canto</th><th>Notas</th></tr>`;
+  const tb=$('cut').querySelector('tbody'); tb.innerHTML='';
+  const lines=[`CÓMODA A MEDIDA · ${cfg.mat} · ${LU(R.W)} de ancho × ${LU(R.H)} de alto × ${LU(R.D)} de fondo`,`Medidas en ${IN()?'pulgadas':'mm'}`,''];
+  let grp='', area={};
+  R.rows.forEach(rw=>{
+    if(rw.grp!==grp){grp=rw.grp; const tr=document.createElement('tr'); tr.className='grp'; tr.innerHTML=`<td colspan="${wood?8:7}">${grp}</td>`; tb.appendChild(tr); lines.push(grp.toUpperCase());}
+    const veta=wood&&rw.veta!=null?`en ${L(rw.veta)}`:'—';
+    const tr=document.createElement('tr'); tr.dataset.id=rw.id;
+    tr.innerHTML=`<td class="id">${rw.id}</td><td>${rw.name}</td><td class="n">${rw.q}</td><td class="n">${L(rw.A)} × ${L(rw.B)}</td><td class="n">${LU(rw.e)}</td>${wood?`<td class="n">${veta}</td>`:''}<td>${rw.canto}</td><td>${rw.note}</td>`;
+    tb.appendChild(tr);
+    lines.push(`${rw.id}  ${rw.q} × ${rw.name}: ${L(rw.A)} × ${L(rw.B)}, grueso ${LU(rw.e)}${wood&&rw.veta!=null?` · veta en ${L(rw.veta)}`:''}${rw.canto?' · canto '+rw.canto:''}${rw.note?' · '+rw.note:''}`);
+    area[rw.e]=(area[rw.e]||0)+rw.q*rw.A*rw.B/1e6;
+  });
+  const SH=1.22*2.44, sh=Object.keys(area).sort((a,b)=>b-a).map(e=>{const n=Math.ceil(area[e]*1.2/SH); return `${e} mm: ${area[e].toFixed(2)} m² ≈ ${n} hoja${n>1?'s':''}`;});
+  $('sheets').textContent=`Material aproximado (hojas de 1.22 × 2.44 m, con 20% de desperdicio): ${sh.join(' · ')}.`;
+  const Hh=hardware(R), hb=$('hw').querySelector('tbody'); hb.innerHTML='';
+  lines.push('','HERRAJES'); Hh.forEach(([a,q,s])=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${a}</td><td class="n">${q}</td><td>${s}</td>`; hb.appendChild(tr); lines.push(`${q} × ${a}: ${s}`);});
+  const N=notes(R); $('notes').innerHTML=N.map(s=>`<li>${s}</li>`).join(''); lines.push('','NOTAS',...N.map(s=>'- '+s));
+  lastText=lines.join('\n');
+  $('sum-desp').textContent=`${R.rows.reduce((a,r)=>a+r.q,0)} piezas · ${R.rows.length} medidas`;
+}
+function renderKpis(R){
+  $('k-h').textContent=LK(R.H); $('k-air').textContent=LK(cfg.hol*10); $('k-n').textContent=R.drawers.length; $('k-sl').textContent=R.L?LU(R.L):'—';
+  $('f-H').value=LK(R.H);
+  $('msgs').innerHTML=R.msgs.map(([k,s])=>`<div class="msg ${k}">${s}</div>`).join('');
+  $('sum-caj').textContent=`${R.n} filas · ${R.drawers.length} cajones · ${R.inset?'al ras':'por fuera'}`;
+  $('sum-base').textContent={ras:'zócalo al ras',remetido:'zócalo metido',frente:'frente hasta el piso'}[R.ztype]+` · cubierta ${cfg.tc} mm`;
+  $('sum-mat').textContent=`${cfg.mat} ${cfg.t} mm · ${hasWood()?'con madera':'pintado'}`;
+  $('svgnote').textContent=`Cotas en ${IN()?'pulgadas':'mm'}. Desliza para ver todo el plano.`;
+}
+
+// ====================== Planos SVG ======================
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const PRINT={ink:'#1D2A2E',muted:'#5E6E72',line:'rgba(29,42,46,.14)',sheet:'#FAFBFB',dim:'#B4541A',accent:'#1F6F78'};
+function pal(print){return print?PRINT:{ink:css('--ink'),muted:css('--muted'),line:css('--line'),sheet:css('--sheet'),dim:css('--dim'),accent:css('--accent')};}
+function dimH(x1,x2,y,txt,below){const o=below?40:0; return `<g class="dim"><line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}"/><line x1="${x1}" y1="${y-9}" x2="${x1}" y2="${y+9}"/><line x1="${x2}" y1="${y-9}" x2="${x2}" y2="${y+9}"/><text x="${(x1+x2)/2}" y="${y-9+o}" text-anchor="middle">${txt}</text></g>`;}
+function dimV(x,y1,y2,txt,side){const s=side==='l'?-1:1; return `<g class="dim"><line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/><line x1="${x-9}" y1="${y1}" x2="${x+9}" y2="${y1}"/><line x1="${x-9}" y1="${y2}" x2="${x+9}" y2="${y2}"/><text x="${x+s*12}" y="${(y1+y2)/2+9}" text-anchor="${s<0?'end':'start'}">${txt}</text></g>`;}
+function svgStyle(p){return `<style>text{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}.ln{fill:none;stroke:${p.ink};stroke-width:2.6}.dim line{stroke:${p.dim};stroke-width:1.8}.dim text{fill:${p.dim};font-size:27px;font-weight:500}.lbl{fill:${p.muted};font-size:24px}.fr{fill:${p.sheet};stroke:${p.ink};stroke-width:2.4}.top{fill:${p.line};stroke:${p.ink};stroke-width:2.4}.mold{fill:${p.line};stroke:${p.muted};stroke-width:1.6}.cut{fill:${p.line};stroke:${p.ink};stroke-width:2}.box{fill:none;stroke:${p.accent};stroke-width:2;stroke-dasharray:9 6}.frame{fill:${p.line};stroke:${p.ink};stroke-width:1.4}</style>`;}
+function svgFront(R,print){
+  const p=pal(print), pad=110, cw=R.W+2*R.vl, VW=cw+pad+340, VH=1330, m0=cfg.mold*10;
+  const X=x=>pad+R.vl+x, Y=y=>1150-y;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VW} ${VH}" width="${VW}" height="${VH}" role="img" aria-label="Alzado frontal con medidas">${svgStyle(p)}`;
+  if(print) s+=`<rect width="${VW}" height="${VH}" fill="#FFFFFF"/>`;
+  s+=`<rect class="mold" x="${pad-50}" y="${Y(m0+80)}" width="${cw+100}" height="80"/><text class="lbl" x="${pad-40}" y="${Y(m0+40)+8}">Moldura ${LK(m0)} a ${LK(m0+80)}</text>`;
+  s+=`<rect class="mold" x="${pad-50}" y="${Y(82)}" width="${cw+100}" height="82" opacity=".5"/>`;
+  s+=`<line class="ln" x1="${pad-60}" y1="${Y(0)}" x2="${pad+cw+60}" y2="${Y(0)}"/>`;
+  s+=`<rect class="top" x="${pad}" y="${Y(R.H)}" width="${cw}" height="${R.tc}"/>`;
+  s+=`<rect class="${R.inset?'frame':'ln'}" x="${X(0)}" y="${Y(R.Hb)}" width="${R.W}" height="${R.Hb}"/>`;
+  if(R.ztype==='ras') s+=R.inset?`<rect class="fr" x="${X(R.t)}" y="${Y(R.z)}" width="${R.W-2*R.t}" height="${R.z-2}"/>`:`<rect class="fr" x="${X(R.e)}" y="${Y(R.z)}" width="${R.W-2*R.e}" height="${R.z-2}"/>`;
+  if(R.ztype==='remetido') s+=`<rect class="cut" x="${X(R.t)}" y="${Y(R.z)}" width="${R.W-2*R.t}" height="${R.z}" opacity=".6"/>`;
+  R.drawers.forEach(d=>{s+=`<rect class="fr" x="${X(d.fx)}" y="${Y(d.fy+d.fh)}" width="${d.fw}" height="${d.fh}"/>`;
+    if(cfg.close!=='push'&&cfg.pull!=='ninguna'){const cy=Y(d.fy+d.fh-Math.min(d.fh/2,90));
+      if(cfg.pull==='boton') (d.fw>600?[d.fx+d.fw/4,d.fx+3*d.fw/4]:[d.fx+d.fw/2]).forEach(x=>s+=`<circle class="ln" cx="${X(x)}" cy="${cy}" r="12"/>`);
+      else s+=`<rect class="ln" x="${X(d.fx+d.fw/2-80)}" y="${cy-6}" width="160" height="12" rx="6"/>`;}});
+  s+=dimH(pad,pad+cw,Y(m0+80)-24,`${L(cw)} cubierta`);
+  s+=dimH(X(0),X(R.W),Y(0)+50,`${L(R.W)} mueble`,true);
+  const xr=pad+cw+40;
+  s+=dimV(xr+150,Y(0),Y(R.H),L(R.H)); s+=dimV(xr+150,Y(R.H),Y(m0),`${L(m0-R.H)} aire`);
+  R.drawers.filter(d=>d.col===0).forEach(d=>{s+=dimV(xr,Y(d.fy),Y(d.fy+d.fh),L(d.fh));});
+  if(R.ztype!=='frente'||R.inset) s+=dimV(xr,Y(0),Y(R.z),L(R.z));
+  const rowB=R.drawers.filter(d=>d.row===R.n-1); if(rowB.length>1) rowB.forEach(d=>{s+=dimH(X(d.fx),X(d.fx+d.fw),Y(0)+100,L(d.fw),true);});
+  const rowT=R.drawers.filter(d=>d.row===0); if(rowT.length>1&&rowT.length!==rowB.length) rowT.forEach(d=>{s+=dimH(X(d.fx),X(d.fx+d.fw),Y(R.H)-90,L(d.fw));});
+  s+=`<text class="lbl" x="${pad-50}" y="${VH-12}">Alzado frontal · ${IN()?'pulgadas':'mm'} · separación ${LU(R.g)}${R.inset?' · frentes al ras del marco':''}</text></svg>`;
+  return s;
+}
+function svgSide(R,print){
+  const p=pal(print), pad=120, cd=(R.inset?R.D:R.D+R.tf)+R.vf, VW=cd+pad+430, VH=1270, m0=cfg.mold*10;
+  const X=z=>pad+60+z, Y=y=>1150-y;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VW} ${VH}" width="${VW}" height="${VH}" role="img" aria-label="Corte lateral con medidas">${svgStyle(p)}`;
+  if(print) s+=`<rect width="${VW}" height="${VH}" fill="#FFFFFF"/>`;
+  s+=`<line class="ln" x1="${X(0)}" y1="${Y(0)}" x2="${X(0)}" y2="${Y(1250)}"/>`;
+  s+=`<path class="mold" d="M${X(0)} ${Y(m0)} h11 l5 -5 v-53 q6 -4 6 -12 q-1 -10 -12 -10 h-10 z"/><text class="lbl" x="${X(40)}" y="${Y(m0+50)}">moldura</text>`;
+  s+=`<rect class="mold" x="${X(0)}" y="${Y(82)}" width="10" height="82"/>`;
+  s+=`<line class="ln" x1="${X(-40)}" y1="${Y(0)}" x2="${X(cd+60)}" y2="${Y(0)}"/>`;
+  const dH=cfg.dest?cfg.dH*10:0, dD=cfg.dest?cfg.dD*10:0, zb=R.tb;
+  s+=`<path class="cut" d="M${X(zb+dD)} ${Y(0)} H${X(R.D)} V${Y(R.Hb)} H${X(zb)} V${Y(dH)} H${X(zb+dD)} Z"/>`;
+  s+=`<rect class="ln" x="${X(0)}" y="${Y(R.Hb)}" width="${R.tb}" height="${R.Hb-R.z}"/>`;
+  s+=`<rect class="top" x="${X(0)}" y="${Y(R.H)}" width="${cd}" height="${R.tc}"/>`;
+  const col0=R.drawers.filter(d=>d.col===0);
+  col0.forEach(d=>{s+=`<rect class="fr" x="${X(R.frontZ)}" y="${Y(d.fy+d.fh)}" width="${R.tf}" height="${d.fh}"/>`; s+=`<rect class="box" x="${X(R.boxZ)}" y="${Y(d.by+d.hb)}" width="${d.L}" height="${d.hb}"/>`;});
+  if(R.ztype==='ras') s+=`<rect class="fr" x="${X(R.inset?R.D-R.tf:R.D)}" y="${Y(R.z)}" width="${R.tf}" height="${R.z-2}"/>`;
+  s+=dimH(X(0),X(cd),Y(R.H)-45,`${L(cd)} cubierta`);
+  s+=dimH(X(0),X(R.D),Y(0)+50,`${L(R.D)} mueble`,true);
+  s+=dimH(X(cd-R.vf),X(cd),Y(R.H)-100,`sale ${L(R.vf)}`);
+  s+=dimV(X(cd)+50,Y(0),Y(R.H),L(R.H)); s+=dimV(X(cd)+50,Y(R.H),Y(m0),`${L(m0-R.H)} aire`);
+  if(cfg.dest) s+=dimV(X(-30),Y(0),Y(dH),`recorte ${L(dH)}×${L(dD)}`,'l');
+  const d0=col0[col0.length-1]; if(d0) s+=dimH(X(R.boxZ),X(R.boxZ+d0.L),Y(d0.by)+40,`riel ${L(d0.L)}`,true);
+  s+=`<text class="lbl" x="${X(-100)}" y="${VH-12}">Corte lateral · ${IN()?'pulgadas':'mm'} · cajas punteadas</text></svg>`;
+  return s;
+}
+
+// ====================== Texturas de madera ======================
+const WOOD={encino:['#CDA77E','#A57A50'],maple:['#E6CDA6','#C8A47A'],pino:['#E0BC8C','#B98A55'],nogal:['#7E5639','#56381F']};
+const texCache={};
+function woodTex(sp){
+  if(texCache[sp]) return texCache[sp];
+  const [a,b]=WOOD[sp], cv=document.createElement('canvas'); cv.width=1024; cv.height=256; const g=cv.getContext('2d');
+  g.fillStyle=a; g.fillRect(0,0,1024,256);
+  let seed=sp.length*977+13; const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
+  for(let i=0;i<90;i++){
+    const y0=rnd()*256, amp=2+rnd()*7, f=0.002+rnd()*0.006, ph=rnd()*6.28, w=0.6+rnd()*2.2;
+    g.strokeStyle=b; g.globalAlpha=0.08+rnd()*0.22; g.lineWidth=w; g.beginPath();
+    for(let x=0;x<=1024;x+=8){const y=y0+amp*Math.sin(x*f+ph)+2*Math.sin(x*f*5+ph*2); x?g.lineTo(x,y):g.moveTo(x,y);} g.stroke();
+  }
+  g.globalAlpha=0.12; g.fillStyle=b; for(let i=0;i<1600;i++){g.fillRect(rnd()*1024,rnd()*256,4+rnd()*10,0.8);}
+  g.globalAlpha=1;
+  const t=new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.encoding=THREE.sRGBEncoding;
+  return texCache[sp]=t;
+}
+function finishOf(role){ if(role==='front') return cfg.finF; if(role==='side') return cfg.finS==='igual'?cfg.finF:cfg.finS; if(role==='top') return cfg.finC; return 'in'; }
+let matCache={};
+function matFor(p,bx){
+  const fin=finishOf(p.role);
+  if(fin==='in') return matCache.in||(matCache.in=new THREE.MeshStandardMaterial({color:cfg.mat==='Triplay'?0xE2C9A0:0xE6DFD3,roughness:0.85}));
+  if(fin==='pintado'){ const k='p'+cfg.colF; return matCache[k]||(matCache[k]=new THREE.MeshStandardMaterial({color:cfg.colF,roughness:0.55})); }
+  if(!cfg.veta){ const k='w'+cfg.wood; return matCache[k]||(matCache[k]=new THREE.MeshStandardMaterial({color:WOOD[cfg.wood][0],roughness:0.5})); }
+  // madera con veta: la textura se escala a la medida real y se orienta según la veta
+  const dims={x:bx.w,y:bx.h,z:bx.d}, thin=Object.keys(dims).reduce((a,k)=>dims[k]<dims[a]?k:a,'x');
+  const [u,v]=thin==='x'?['z','y']:thin==='y'?['x','z']:['x','y'];
+  const tx=woodTex(cfg.wood).clone(); tx.needsUpdate=true; tx.center.set(.5,.5);
+  if(p.grain===v){tx.rotation=Math.PI/2; tx.repeat.set(dims[u]/300,dims[v]/1200);} else tx.repeat.set(dims[u]/1200,dims[v]/300);
+  tx.offset.set((bx.x*0.37+bx.y*0.11)%1,(bx.z*0.23)%1);
+  return new THREE.MeshStandardMaterial({map:tx,roughness:0.5});
+}
+
+// ====================== 3D: armado y explosión ======================
+let T3=null, mode='armado';
+function init3D(){
+  if(!window.THREE){$('v3d').innerHTML='<p class="help" style="padding:16px">No se pudo cargar el visor 3D. Revisa los planos en las otras pestañas.</p>'; return;}
+  const el=$('v3d');
+  const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.8;
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.physicallyCorrectLights=true;
+  el.appendChild(renderer.domElement);
+  const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(40,1,0.02,40);
+  const ctl=new THREE.OrbitControls(cam,renderer.domElement); ctl.enableDamping=true; ctl.screenSpacePanning=true; ctl.minDistance=0.3; ctl.maxDistance=8;
+  scene.add(new THREE.HemisphereLight(0xfff7ec,0xa89c8b,0.95));
+  const sun=new THREE.DirectionalLight(0xfff3e4,2.2); sun.position.set(1.6,2.4,2.6); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+  Object.assign(sun.shadow.camera,{left:-2,right:2,top:2.4,bottom:-0.6,near:0.5,far:9}); sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.02; scene.add(sun,sun.target);
+  const env=new THREE.Group(), asm=new THREE.Group(), ex=new THREE.Group(); scene.add(env,asm,ex);
+  const sel=new THREE.BoxHelper(undefined,0xB4541A); sel.visible=false; sel.material.depthTest=false; sel.renderOrder=30; scene.add(sel);
+  T3={renderer,scene,cam,ctl,sun,env,asm,ex,sel,drawers:[],exParts:[],selObj:null};
+  new ResizeObserver(()=>{const w=el.clientWidth,h=el.clientHeight; if(!w||!h)return; renderer.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix();}).observe(el);
+  const ray=new THREE.Raycaster(), v=new THREE.Vector2(); let down=null;
+  el.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};});
+  el.addEventListener('pointerup',e=>{ if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>8){down=null;return;} down=null;
+    const r=el.getBoundingClientRect(); v.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1); ray.setFromCamera(v,cam);
+    if(mode==='armado'){ const h=ray.intersectObjects(T3.drawers.map(d=>d.g),true)[0]; if(!h)return; let o=h.object; while(o&&!o.userData.dr) o=o.parent; if(o){o.userData.dr.t=o.userData.dr.t>0.5?0:1; syncOpenBtn();} }
+    else { const h=ray.intersectObjects(T3.exParts.map(p=>p.g),true).find(h=>h.object.type==='Mesh'); if(!h){pick(null);return;} let o=h.object; while(o&&!o.userData.piece) o=o.parent; pick(o?o.userData.piece:null); }
+  });
+  let last=performance.now();
+  (function loop(now){const dt=Math.min(0.05,(now-last)/1000); last=now;
+    T3.drawers.forEach(d=>{if(Math.abs(d.v-d.t)>1e-3){d.v+=Math.sign(d.t-d.v)*Math.min(Math.abs(d.t-d.v),dt*2.2); const k=d.v<.5?2*d.v*d.v:1-Math.pow(-2*d.v+2,2)/2; d.g.position.z=d.open*k;}});
+    if(T3.sel.visible&&T3.selObj) T3.sel.setFromObject(T3.selObj);
+    ctl.update(); renderer.render(scene,cam); requestAnimationFrame(loop);})(last);
+}
+function railGeom(len){
+  const s=new THREE.Shape(); s.moveTo(0,0); s.lineTo(0.011,0); s.lineTo(0.016,0.005); s.lineTo(0.016,0.058);
+  s.quadraticCurveTo(0.022,0.062,0.022,0.07); s.quadraticCurveTo(0.021,0.08,0.01,0.08); s.lineTo(0,0.08); s.lineTo(0,0);
+  return new THREE.ExtrudeGeometry(s,{depth:len,bevelEnabled:false,curveSegments:8});
+}
+const K=0.001;
+function meshBox(b,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(b.w*K,b.h*K,b.d*K),mat); m.position.set((b.x+b.w/2)*K,(b.y+b.h/2)*K,(b.z+b.d/2)*K); m.castShadow=true; m.receiveShadow=true; return m;}
+function labelSprite(text){
+  const c=document.createElement('canvas'); c.width=128; c.height=56; const g=c.getContext('2d');
+  g.fillStyle='rgba(29,42,46,.88)'; g.beginPath(); if(g.roundRect) g.roundRect(2,2,124,52,26); else g.rect(2,2,124,52); g.fill();
+  g.fillStyle='#FFFFFF'; g.font='600 30px "IBM Plex Mono", monospace'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(text,64,30);
+  const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true})); s.scale.set(0.052,0.023,1); s.renderOrder=20; s.userData.label=true; return s;
+}
+function clearGroup(g){ g.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material&&!Object.values(matCache).includes(o.material)){ if(o.material.map&&!Object.values(texCache).includes(o.material.map)) o.material.map.dispose(); o.material.dispose(); } }); g.clear(); }
+function build3D(R){
+  if(!T3) return;
+  const prevOpen=T3.drawers.map(d=>d.t);
+  [T3.env,T3.asm,T3.ex].forEach(clearGroup); T3.drawers=[]; T3.exParts=[]; T3.selObj=null; T3.sel.visible=false;
+  const M=(c,r)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+  const m0=cfg.mold*10, Wm=R.W*K;
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.2),M(0xE2E2DF,0.4)); floor.rotation.x=-Math.PI/2; floor.position.set(Wm/2,0,0.9); floor.receiveShadow=true; T3.env.add(floor);
+  const wl=new THREE.Mesh(new THREE.PlaneGeometry(3.2,m0*K),M(0xF3EFE7,0.6)); wl.position.set(Wm/2,m0*K/2,-0.001); wl.receiveShadow=true; T3.env.add(wl);
+  const wu=new THREE.Mesh(new THREE.PlaneGeometry(3.2,1.0),M(0xD8C6A5,0.95)); wu.position.set(Wm/2,m0*K+0.5,-0.001); wu.receiveShadow=true; T3.env.add(wu);
+  const rail=new THREE.Mesh(railGeom(3.2),M(0xF3EFE7,0.45)); rail.rotation.y=-Math.PI/2; rail.position.set(Wm/2+1.6,m0*K,0); rail.castShadow=true; rail.receiveShadow=true; T3.env.add(rail);
+  T3.env.add(meshBox({x:R.W/2-1600,y:0,z:0,w:3200,h:82,d:10},M(0xE4DED4,0.3)));
+  const dg=R.drawers.map((d,i)=>{const g=new THREE.Group(); T3.asm.add(g); const dr={g,t:prevOpen[i]||0,v:prevOpen[i]||0,open:d.L*0.8*K}; g.userData.dr=dr; T3.drawers.push(dr); return g;});
+  const metal=new THREE.MeshStandardMaterial({color:0xBFC3C6,roughness:0.3,metalness:0.85});
+  R.pieces.forEach(p=>{
+    const parent=p.drawer!=null?dg[p.drawer]:T3.asm;
+    p.boxes.forEach(b=>parent.add(meshBox(b,matFor(p,b))));
+    const g=new THREE.Group(); p.boxes.forEach(b=>{const m=meshBox(b,matFor(p,b)); m.castShadow=false; g.add(m);}); g.userData.piece=p;
+    const cen=new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3());
+    const lab=labelSprite(p.id); lab.position.copy(cen); g.add(lab);
+    T3.ex.add(g); T3.exParts.push({g,p,off:new THREE.Vector3(...p.ex).multiplyScalar(K)});
+  });
+  if(cfg.close!=='push'&&cfg.pull!=='ninguna') R.drawers.forEach((d,i)=>{const cy=(d.fy+d.fh-Math.min(d.fh/2,90))*K, zf=(R.frontZ+R.tf)*K;
+    if(cfg.pull==='boton') (d.fw>600?[d.fx+d.fw/4,d.fx+3*d.fw/4]:[d.fx+d.fw/2]).forEach(x=>{const s=new THREE.Mesh(new THREE.SphereGeometry(0.014,18,12),metal); s.position.set(x*K,cy,zf+0.01); s.castShadow=true; dg[i].add(s);});
+    else {const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.17,14),metal); bar.rotation.z=Math.PI/2; bar.position.set((d.fx+d.fw/2)*K,cy,zf+0.022); dg[i].add(bar);}});
+  dg.forEach(g=>{g.position.z=g.userData.dr.open*g.userData.dr.v;});
+  T3.sun.target.position.set(Wm/2,R.H*K/2,0);
+  T3.scene.background=new THREE.Color(css('--paper'));
+  applyExplode(); applyMode(); syncOpenBtn();
+  $('pinfo').textContent='Toca una pieza para ver su clave y medidas. Las claves coinciden con el despiece.';
+}
+function applyExplode(){ if(!T3)return; const f=+$('exf').value/100; T3.exParts.forEach(e=>e.g.position.copy(e.off).multiplyScalar(f)); const on=$('exLabels').checked; T3.ex.traverse(o=>{if(o.userData.label) o.visible=on;}); }
+function applyMode(){ if(!T3)return; const ex=mode==='explosion'; T3.ex.visible=ex; T3.asm.visible=!ex; T3.env.visible=!ex; T3.sel.visible=ex&&!!T3.selObj; }
+function fitExplosion(){ if(!T3)return; const bb=new THREE.Box3(); T3.exParts.forEach(e=>bb.expandByObject(e.g)); if(bb.isEmpty())return;
+  const c=bb.getCenter(new THREE.Vector3()), s=bb.getSize(new THREE.Vector3()).length();
+  T3.ctl.target.copy(c); T3.cam.position.copy(c).add(new THREE.Vector3(0.75,0.55,1).normalize().multiplyScalar(s*1.05)); T3.ctl.update(); }
+function setView(v){ if(!T3||!current)return; const W=current.W*K, H=current.H*K, t=new THREE.Vector3(W/2,H*0.55,0.2);
+  const p=v==='front'?new THREE.Vector3(W/2,H*0.6,2.4):new THREE.Vector3(W/2+1.3,H+0.55,1.9); T3.cam.position.copy(p); T3.ctl.target.copy(t); T3.ctl.update(); }
+function pick(p){
+  if(!T3)return; document.querySelectorAll('#cut tr.pick').forEach(tr=>tr.classList.remove('pick'));
+  if(!p){T3.selObj=null; T3.sel.visible=false; $('pinfo').textContent='Toca una pieza para ver su clave y medidas. Las claves coinciden con el despiece.'; return;}
+  const e=T3.exParts.find(x=>x.p===p); T3.selObj=e?e.g:null; T3.sel.visible=!!T3.selObj;
+  const rw=current.rows.find(r=>r.id===p.id);
+  $('pinfo').innerHTML=`<b>${p.id}</b> · ${p.name} · ${L(rw.A)} × ${L(rw.B)} ${UL()} · grueso ${LU(p.e)} · ${rw.q} pieza${rw.q>1?'s iguales':''}${rw.note?' · '+rw.note:''}`;
+  const tr=document.querySelector(`#cut tr[data-id="${p.id}"]`); if(tr) tr.classList.add('pick');
+}
+function syncOpenBtn(){ if(!T3)return; $('openAll').textContent=T3.drawers.some(d=>d.t>0.5)?'Cerrar cajones':'Abrir cajones'; }
+$('openAll').onclick=()=>{ if(!T3)return; const any=T3.drawers.some(d=>d.t>0.5); T3.drawers.forEach(d=>d.t=any?0:1); syncOpenBtn(); };
+$('viewFront').onclick=()=>setView('front'); $('viewIso').onclick=()=>setView('iso');
+$('exf').addEventListener('input',applyExplode); $('exLabels').addEventListener('change',applyExplode); $('exFit').onclick=fitExplosion;
+
+// ====================== Pestañas ======================
+function selectTab(id){
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===id)));
+  const is3=id==='armado'||id==='explosion';
+  $('v3d').hidden=!is3; $('vfront').hidden=id!=='vfront'; $('vside').hidden=id!=='vside';
+  $('bar-armado').hidden=id!=='armado'; $('bar-ex').hidden=id!=='explosion'; $('bar-svg').hidden=is3;
+  if(is3){const prev=mode; mode=id; applyMode(); if(prev!==mode){ if(mode==='explosion') fitExplosion(); else setView('iso'); }}
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>selectTab(b.dataset.tab));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>update(false));
+
+// ====================== PDF ======================
+const pdfSafe=s=>String(s).replace(/[–—]/g,'-').replace(/≈/g,'aprox.').replace(/[“”]/g,'"').replace(/·/g,'-').replace(/²/g,'2').replace(/−/g,'-');
+function snap3D(which,w,h){
+  const {renderer,cam,ctl,scene}=T3; const prev={mode,pos:cam.position.clone(),tgt:ctl.target.clone(),asp:cam.aspect,size:renderer.getSize(new THREE.Vector2()),pr:renderer.getPixelRatio(),bg:scene.background,sel:T3.sel.visible};
+  mode=which; applyMode(); if(which==='explosion'){applyExplode(); fitExplosion();} else setView('iso');
+  renderer.setPixelRatio(1); renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); scene.background=new THREE.Color('#FFFFFF'); T3.sel.visible=false;
+  renderer.render(scene,cam); const url=renderer.domElement.toDataURL('image/jpeg',0.9);
+  scene.background=prev.bg; renderer.setPixelRatio(prev.pr); renderer.setSize(prev.size.x,prev.size.y); cam.aspect=prev.asp; cam.updateProjectionMatrix();
+  cam.position.copy(prev.pos); ctl.target.copy(prev.tgt); ctl.update(); mode=prev.mode; applyMode();
+  return url;
+}
+function svgToPng(svg,w){return new Promise((res,rej)=>{const vb=svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/), W=+vb[1], H=+vb[2], s=w/W;
+  const img=new Image(); img.onload=()=>{const c=document.createElement('canvas'); c.width=Math.round(W*s); c.height=Math.round(H*s); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(img,0,0,c.width,c.height); res({url:c.toDataURL('image/jpeg',0.9),ratio:H/W});};
+  img.onerror=()=>rej(new Error('no se pudo dibujar el plano')); img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);});}
+async function buildPdf(){
+  const R=current, {jsPDF}=window.jspdf, doc=new jsPDF({unit:'mm',format:'a4',compress:true}), PW=210, M=12, wood=hasWood();
+  const head=(t,sub)=>{doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(29,42,46); doc.text(pdfSafe(t),M,16); doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(94,110,114); if(sub) doc.text(pdfSafe(sub),M,22);};
+  const date=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+  head('Cómoda a medida - hoja de fabricación',`${date} · medidas en ${IN()?'pulgadas':'mm'} · ${cfg.mat} ${cfg.t} mm`);
+  doc.setTextColor(29,42,46); doc.setFontSize(10.5);
+  [`Altura total: ${LK(R.H)} (${LK(cfg.mold*10-R.H)} abajo de la moldura)`,`Ancho del mueble: ${LU(R.W)} · fondo: ${LU(R.D)}`,`Cajones: ${R.drawers.length} en ${R.n} filas · frentes ${R.inset?'al ras del marco':'por fuera'} · separación ${LU(R.g)}`,`Rieles: ${LU(R.L)} ${cfg.slide==='lateral'?'a los lados':'ocultos'} · cubierta ${cfg.tc} mm`]
+    .forEach((f,i)=>doc.text(pdfSafe(f),M,31+i*5.5));
+  const imgW=PW-2*M, a3h=imgW*1000/1400;
+  doc.addImage(snap3D('armado',1400,1000),'JPEG',M,55,imgW,a3h);
+  const fr=await svgToPng(svgFront(R,true),1400); const fh=Math.min(297-55-a3h-14,imgW*fr.ratio), fw=fh/fr.ratio; doc.addImage(fr.url,'JPEG',(PW-fw)/2,55+a3h+4,fw,fh);
+  doc.addPage(); head('Explosión del mueble','Cada pieza lleva su clave; búscala en el despiece.');
+  const e3h=imgW*1100/1400; doc.addImage(snap3D('explosion',1400,1100),'JPEG',M,28,imgW,e3h);
+  const sd=await svgToPng(svgSide(R,true),1200); const sh=Math.min(297-28-e3h-14,imgW*sd.ratio), sw=sh/sd.ratio; doc.addImage(sd.url,'JPEG',(PW-sw)/2,28+e3h+4,sw,sh);
+  doc.addPage(); head('Despiece',`Medidas de corte en ${IN()?'pulgadas':'mm'}, sin descontar canto.`);
+  const body=[]; let g='';
+  R.rows.forEach(rw=>{ if(rw.grp!==g){g=rw.grp; body.push([{content:g.toUpperCase(),colSpan:wood?8:7,styles:{fontStyle:'bold',textColor:[31,111,120],fillColor:[238,241,241]}}]);}
+    const row=[rw.id,rw.name,String(rw.q),`${L(rw.A)} x ${L(rw.B)}`,LU(rw.e)]; if(wood) row.push(rw.veta!=null?L(rw.veta):'-'); row.push(rw.canto,rw.note); body.push(row.map(pdfSafe)); });
+  const headRow=['Clave','Pieza','Cant.','Largo x ancho','Grueso']; if(wood) headRow.push('Veta en'); headRow.push('Canto','Notas');
+  doc.autoTable({startY:27,head:[headRow],body,margin:{left:M,right:M},styles:{fontSize:8,cellPadding:1.6,valign:'top'},headStyles:{fillColor:[29,42,46]},columnStyles:{0:{cellWidth:11},2:{cellWidth:10,halign:'center'},3:{cellWidth:24},4:{cellWidth:15}}});
+  let y=doc.lastAutoTable.finalY+8; if(y>250){doc.addPage(); y=20;}
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(29,42,46); doc.text('Herrajes',M,y);
+  doc.autoTable({startY:y+3,head:[['Herraje','Cant.','Qué pedir']],body:hardware(R).map(r=>r.map(x=>pdfSafe(x))),margin:{left:M,right:M},styles:{fontSize:8.5,cellPadding:1.6},headStyles:{fillColor:[29,42,46]},columnStyles:{1:{cellWidth:12,halign:'center'}}});
+  y=doc.lastAutoTable.finalY+8; if(y>240){doc.addPage(); y=20;}
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Notas para el carpintero',M,y); y+=6; doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+  notes(R).forEach(n=>{const ls=doc.splitTextToSize('- '+pdfSafe(n),PW-2*M); if(y+ls.length*4.6>285){doc.addPage(); y=20;} doc.text(ls,M,y); y+=ls.length*4.6+1.5;});
+  const pages=doc.getNumberOfPages(); for(let i=1;i<=pages;i++){doc.setPage(i); doc.setFontSize(8); doc.setTextColor(94,110,114); doc.text(`Cómoda a medida - página ${i} de ${pages}`,PW-M,290,{align:'right'});}
+  return doc;
+}
+window.__buildPdf=buildPdf;
+$('pdfBtn').onclick=async()=>{
+  const btn=$('pdfBtn'); if(!window.jspdf||!T3){ showPdfMsg('No se pudo cargar el generador de PDF. Revisa tu conexión y vuelve a intentar.'); return; }
+  btn.disabled=true; btn.textContent='Generando…';
+  try{ const doc=await buildPdf(); doc.save('comoda-despiece.pdf');
+    showPdfMsg(`PDF listo: comoda-despiece.pdf, ${doc.getNumberOfPages()} páginas (armado, explosión, despiece). Si no se descargó, es porque esta vista no permite descargas: abre la herramienta desde su enlace de GitHub o en el navegador y vuelve a tocar “Generar PDF”.`); }
+  catch(err){ showPdfMsg('No se pudo generar el PDF: '+err.message); }
+  btn.disabled=false; btn.textContent='Generar PDF';
+};
+function showPdfMsg(t){const m=$('pdfMsg'); m.hidden=false; m.textContent=t; m.closest('details').open=true; m.scrollIntoView({block:'nearest'});}
+
+// ====================== Acciones ======================
+$('copy').onclick=async()=>{ try{await navigator.clipboard.writeText(lastText); $('copy').textContent='Despiece copiado'; setTimeout(()=>$('copy').textContent='Copiar despiece',1800);}
+  catch(e){const b=$('copyBox'); b.hidden=false; b.value=lastText; b.focus(); b.select();} };
+let arm=0; $('reset').onclick=()=>{ if(Date.now()-arm>3000){arm=Date.now(); $('reset').textContent='Toca otra vez para restablecer'; setTimeout(()=>$('reset').textContent='Restablecer',3000); return;}
+  const u=cfg.units; cfg=Object.assign({},DEF,{rowCols:[...DEF.rowCols],rowH:[],colW:[],units:u}); SEL.forEach(k=>$('f-'+k).value=String(cfg[k])); $('f-dest').checked=cfg.dest; $('f-veta').checked=cfg.veta;
+  ['rowcols','rowh','colw'].forEach(id=>$(id).dataset.k=''); $('reset').textContent='Restablecer'; update(); };
+
+// ====================== Ciclo ======================
+function update(rebuildChips=true){
+  if(rebuildChips) rebuildSegs();
+  while(cfg.rowCols.length<cfg.rows) cfg.rowCols.push(2);
+  matCache={};
+  const R=compute(cfg); current=R;
+  fillNums(); dynFields(R); renderKpis(R); renderTables(R);
+  $('vfront').innerHTML=svgFront(R,false); $('vside').innerHTML=svgSide(R,false);
+  build3D(R); save();
+}
+init3D(); update(); setView('iso');
+})();
+</script>
+
+</html>

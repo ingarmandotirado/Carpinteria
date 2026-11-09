@@ -1,0 +1,5 @@
+[
+  {"nombre":"Base: 95 cm, 3 filas de 2, frentes por fuera","fecha":"9 nov 2026","config":{}},
+  {"nombre":"Al ras del marco, 25 mm, encino con veta","fecha":"9 nov 2026","config":{"mount":"ras","gap":25,"finF":"madera"}},
+  {"nombre":"3 chicos arriba y 2 grandes abajo","fecha":"9 nov 2026","config":{"cmode":"fila","rowCols":[3,2,2]}}
+]

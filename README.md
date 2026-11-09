@@ -49,3 +49,8 @@ Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro super
 - Armado 3D, explosión del mueble con la clave de cada pieza, alzado y corte con medidas.
 - Acabados pintado o madera (encino, maple, pino, nogal) con veta visible; el despiece indica en qué medida corre la veta.
 - PDF de fabricación con armado, explosión, planos, despiece, herrajes y notas.
+- Guardar configuraciones con nombre (en el dispositivo), compartirlas por enlace público y abrir las públicas de `comoda/configs.json`.
+
+### Configuraciones públicas
+
+`comoda/configs.json` es la lista pública que ve cualquiera en “Guardar / abrir”. Cada entrada lleva `nombre`, `fecha` y `config` (solo los valores que cambian respecto a la base). Para agregar una, copia su enlace con el botón “Enlace” y pásalo para sumarlo a la lista.

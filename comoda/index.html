@@ -110,6 +110,18 @@ ul.notes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
 textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px}
 .foot{grid-column:1/-1;color:var(--muted);font-size:12.5px}
+.saves{background:var(--sheet);border:1px solid var(--accent);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.savehead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.savehead h2{font:700 18px var(--f-display);letter-spacing:.03em;text-transform:uppercase;margin:0}
+.saverow{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.saverow .grow{flex:1 1 220px}
+.saverow input{font-family:var(--f-body)}
+.savelist ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.savelist li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.savelist li .nm{font-weight:600;flex:1 1 160px;min-width:0;overflow-wrap:anywhere}
+.savelist li .dt{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.savelist li button.b{padding:5px 11px;font-size:13px}
+.savelist .empty{color:var(--muted);font-size:13px;border-style:dashed}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
 </style>
@@ -122,6 +134,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
     </div>
     <div class="hdr-actions">
       <div class="seg" id="s-units" role="group" aria-label="Unidades"></div>
+      <button class="b" id="savesBtn" aria-expanded="false" aria-controls="saves">Guardar / abrir</button>
       <button class="b primary" id="pdfBtn">Generar PDF</button>
     </div>
   </header>
@@ -160,6 +173,24 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       <div class="kpi"><span>Cajones</span><b id="k-n">—</b></div>
       <div class="kpi"><span>Rieles</span><b id="k-sl">—</b></div>
     </div>
+    <section class="saves" id="saves" hidden aria-label="Configuraciones guardadas">
+      <div class="savehead"><h2>Configuraciones</h2><span class="help" id="curName"></span></div>
+      <div class="saverow">
+        <label class="f grow">Nombre de esta configuración<input id="saveName" type="text" maxlength="60" placeholder="Ej. Cómoda 3 filas al ras, encino" autocomplete="off"></label>
+        <button class="b primary" id="saveDo">Guardar</button>
+      </div>
+      <p class="help" id="saveMsg" aria-live="polite"></p>
+      <div class="savelist">
+        <div class="seglbl">Guardadas en este dispositivo</div>
+        <ul id="localList"></ul>
+      </div>
+      <div class="savelist" id="pubWrap" hidden>
+        <div class="seglbl">Públicas (en el repositorio, se ven desde cualquier dispositivo)</div>
+        <ul id="pubList"></ul>
+      </div>
+      <textarea id="linkBox" rows="3" hidden aria-label="Enlace de la configuración"></textarea>
+      <p class="help">“Enlace” copia una dirección pública con toda la configuración: quien la abra ve la misma cómoda y puede guardarla con su nombre. Para que una quede en la lista pública, mándame su enlace.</p>
+    </section>
     <div class="msgs" id="msgs"></div>
 
     <details class="g" open>
@@ -817,6 +848,67 @@ function showPdfMsg(t){const m=$('pdfMsg'); m.hidden=false; m.textContent=t; m.c
 // ====================== Acciones ======================
 $('copy').onclick=async()=>{ try{await navigator.clipboard.writeText(lastText); $('copy').textContent='Despiece copiado'; setTimeout(()=>$('copy').textContent='Copiar despiece',1800);}
   catch(e){const b=$('copyBox'); b.hidden=false; b.value=lastText; b.focus(); b.select();} };
+// ====================== Guardar y abrir configuraciones ======================
+const SAVES='comodaDespiece.guardadas.v1';
+const PAGE=/github\.io$/.test(location.hostname)?location.origin+location.pathname:'https://ingarmandotirado.github.io/Carpinteria/comoda/';
+let curName='';
+const loadSaves=()=>{try{const a=JSON.parse(localStorage.getItem(SAVES)||'[]'); return Array.isArray(a)?a:[];}catch(e){return [];}};
+const storeSaves=a=>{try{localStorage.setItem(SAVES,JSON.stringify(a)); return true;}catch(e){return false;}};
+function diffCfg(){const o={}; Object.keys(DEF).forEach(k=>{if(JSON.stringify(cfg[k])!==JSON.stringify(DEF[k])) o[k]=cfg[k];}); return o;}
+const b64e=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+const linkFor=(name,conf)=>PAGE+'?c='+b64e(JSON.stringify({n:name,c:conf}));
+function applyCfg(conf,name){
+  const keep=cfg.units;
+  cfg=Object.assign({},DEF,conf||{}); if(!conf||conf.units==null) cfg.units=keep;
+  cfg.rowCols=[...(cfg.rowCols||DEF.rowCols)]; cfg.rowH=[...(cfg.rowH||[])]; cfg.colW=[...(cfg.colW||[])];
+  SEL.forEach(k=>$('f-'+k).value=String(cfg[k])); $('f-dest').checked=!!cfg.dest; $('f-veta').checked=!!cfg.veta;
+  ['rowcols','rowh','colw'].forEach(id=>$(id).dataset.k='');
+  curName=name||''; $('saveName').value=curName; showCur(); update();
+}
+function showCur(){$('curName').textContent=curName?`Abierta: ${curName}`:'';}
+function saveMsg(t){$('saveMsg').textContent=t;}
+async function copyLink(url,label){
+  try{await navigator.clipboard.writeText(url); saveMsg(`Enlace de “${label}” copiado. Pégalo en WhatsApp o donde quieras compartirlo.`); $('linkBox').hidden=true;}
+  catch(e){const b=$('linkBox'); b.hidden=false; b.value=url; b.focus(); b.select(); saveMsg('Copia el enlace del cuadro de abajo.');}
+}
+function fmtDate(t){try{return new Date(t).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});}catch(e){return '';}}
+function li(name,date,actions){const el=document.createElement('li'); const n=document.createElement('span'); n.className='nm'; n.textContent=name; el.appendChild(n);
+  if(date){const d=document.createElement('span'); d.className='dt'; d.textContent=date; el.appendChild(d);}
+  actions.forEach(([lab,fn])=>{const b=document.createElement('button'); b.className='b'; b.type='button'; b.textContent=lab; b.onclick=()=>fn(b); el.appendChild(b);}); return el;}
+function renderSaves(){
+  const ul=$('localList'); ul.innerHTML=''; const a=loadSaves();
+  if(!a.length){const e=document.createElement('li'); e.className='empty'; e.textContent='Todavía no hay configuraciones guardadas aquí. Escribe un nombre arriba y toca Guardar.'; ul.appendChild(e);}
+  a.slice().sort((x,y)=>y.t-x.t).forEach(sv=>ul.appendChild(li(sv.n,fmtDate(sv.t),[
+    ['Abrir',()=>{applyCfg(sv.c,sv.n); saveMsg(`Abriste “${sv.n}”.`);}],
+    ['Enlace',()=>copyLink(linkFor(sv.n,sv.c),sv.n)],
+    ['Borrar',b=>{ if(b.dataset.arm!=='1'){b.dataset.arm='1'; b.textContent='¿Borrar?'; setTimeout(()=>{b.dataset.arm=''; b.textContent='Borrar';},3000); return;}
+      storeSaves(loadSaves().filter(x=>x.n!==sv.n)); if(curName===sv.n){curName=''; showCur();} renderSaves(); saveMsg(`Borraste “${sv.n}”.`);}]
+  ])));
+}
+let pubs=[];
+function renderPubs(){ const ul=$('pubList'); ul.innerHTML=''; $('pubWrap').hidden=!pubs.length;
+  pubs.forEach(p=>ul.appendChild(li(p.nombre,p.fecha||'',[['Abrir',()=>{applyCfg(p.config,p.nombre); saveMsg(`Abriste “${p.nombre}” (pública).`);}],['Enlace',()=>copyLink(linkFor(p.nombre,p.config),p.nombre)]]))); }
+fetch('configs.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]).then(a=>{if(Array.isArray(a)){pubs=a.filter(p=>p&&p.nombre&&p.config); renderPubs();}}).catch(()=>{});
+$('savesBtn').onclick=()=>{const p=$('saves'), open=p.hidden; p.hidden=!open; $('savesBtn').setAttribute('aria-expanded',String(open)); if(open){renderSaves(); p.scrollIntoView({block:'nearest',behavior:'smooth'}); $('saveName').focus();}};
+$('saveDo').onclick=()=>{
+  const n=$('saveName').value.trim().replace(/\s+/g,' ');
+  if(!n){saveMsg('Escribe un nombre para guardar la configuración.'); $('saveName').focus(); return;}
+  const a=loadSaves(), i=a.findIndex(x=>x.n.toLowerCase()===n.toLowerCase()), rec={n,t:Date.now(),c:diffCfg()};
+  if(i>=0) a[i]=rec; else a.push(rec);
+  if(!storeSaves(a)){saveMsg('Este navegador no deja guardar (¿ventana privada?). Usa “Enlace” para conservarla.'); return;}
+  curName=n; showCur(); renderSaves(); saveMsg(i>=0?`Actualizaste “${n}”.`:`Guardaste “${n}”.`);
+};
+$('saveName').addEventListener('keydown',e=>{if(e.key==='Enter') $('saveDo').click();});
+function openFromUrl(){
+  let q=null; try{q=new URLSearchParams(location.search).get('c');}catch(e){}
+  if(!q) return;
+  try{const o=JSON.parse(b64d(q)); applyCfg(o.c||{},o.n||'');
+    $('saves').hidden=false; $('savesBtn').setAttribute('aria-expanded','true'); renderSaves();
+    saveMsg(`Abriste “${o.n||'configuración compartida'}” desde un enlace. Toca Guardar para tenerla en tu lista.`);}
+  catch(e){ $('saves').hidden=false; saveMsg('El enlace no trae una configuración válida. Pide que te lo vuelvan a copiar completo.'); }
+}
+
 let arm=0; $('reset').onclick=()=>{ if(Date.now()-arm>3000){arm=Date.now(); $('reset').textContent='Toca otra vez para restablecer'; setTimeout(()=>$('reset').textContent='Restablecer',3000); return;}
   const u=cfg.units; cfg=Object.assign({},DEF,{rowCols:[...DEF.rowCols],rowH:[],colW:[],units:u}); SEL.forEach(k=>$('f-'+k).value=String(cfg[k])); $('f-dest').checked=cfg.dest; $('f-veta').checked=cfg.veta;
   ['rowcols','rowh','colw'].forEach(id=>$(id).dataset.k=''); $('reset').textContent='Restablecer'; update(); };
@@ -831,7 +923,7 @@ function update(rebuildChips=true){
   $('vfront').innerHTML=svgFront(R,false); $('vside').innerHTML=svgSide(R,false);
   build3D(R); save();
 }
-init3D(); update(); setView('iso');
+init3D(); update(); openFromUrl(); setView('iso');
 })();
 </script>
 

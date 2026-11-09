@@ -47,7 +47,7 @@ Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro super
 - Mueble hasta el piso: zócalo al ras, metido o frente inferior hasta el piso; recorte abajo atrás para librar el zoclo.
 - Botón mm / pulgadas (fracciones de 1/16").
 - Armado 3D, explosión del mueble con la clave de cada pieza, alzado y corte con medidas.
-- Acabados pintado o madera (encino, maple, pino, nogal) con veta visible; el despiece indica en qué medida corre la veta.
+- Acabados pintado o madera con veta visible. Tono de madera en un mapa (claro a oscuro, gris a rojizo), con muestras comunes (maple, pino, encino, roble, teca, cerezo, caoba, nogal, wengué, ébano) y tonos lisos (blancos, greige y grises). El despiece indica en qué medida corre la veta.
 - PDF de fabricación con armado, explosión, planos, despiece, herrajes y notas.
 - Guardar configuraciones con nombre (en el dispositivo), compartirlas por enlace público y abrir las públicas de `comoda/configs.json`.
 

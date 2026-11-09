@@ -122,6 +122,21 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
 .savelist li .dt{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
 .savelist li button.b{padding:5px 11px;font-size:13px}
 .savelist .empty{color:var(--muted);font-size:13px;border-style:dashed}
+.woodpick{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.wphead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.wphead .seglbl{margin:0}
+.wpcur{display:flex;align-items:center;gap:8px;font-size:14px}
+.wpcur code{font:500 12.5px var(--f-mono);color:var(--muted)}
+.wpsw{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);display:inline-block}
+.wpchips{display:flex;flex-wrap:wrap;gap:6px}
+.wpchip{display:flex;align-items:center;gap:6px;font:500 13px var(--f-body);color:var(--ink);background:var(--sheet);border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 4px;cursor:pointer}
+.wpchip i{width:20px;height:20px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.wpchip[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.wpmap{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+.wpmap canvas{width:100%;height:auto;aspect-ratio:360/150;border-radius:8px;border:1px solid var(--line);cursor:crosshair;touch-action:none;display:block}
+.wpmap .ax{font:600 11px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.ax-x{display:flex;justify-content:space-between;font:600 11px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.wpdot{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.6);pointer-events:none}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
 </style>
@@ -283,9 +298,22 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
           <label class="f">Acabado de frentes<select id="f-finF"><option value="pintado">Pintado</option><option value="madera">Madera</option></select></label>
           <label class="f">Acabado de laterales<select id="f-finS"><option value="igual">Igual que los frentes</option><option value="pintado">Pintado</option><option value="madera">Madera</option></select></label>
           <label class="f">Acabado de cubierta<select id="f-finC"><option value="madera">Madera</option><option value="pintado">Pintado</option></select></label>
-          <label class="f">Madera<select id="f-wood"><option value="encino">Encino claro</option><option value="maple">Maple</option><option value="pino">Pino</option><option value="nogal">Nogal</option></select></label>
           <label class="f">Color de pintura<select id="f-colF"><option value="#F3EFE7">Blanco perla</option><option value="#BFC4C8">Gris</option><option value="#B5C2AA">Salvia</option><option value="#D8C6A5">Beige</option></select></label>
           <label class="f chk"><input id="f-veta" type="checkbox"> Mostrar la veta</label>
+        </div>
+        <div class="woodpick" id="woodpick">
+          <div class="wphead"><div class="seglbl">Tono de la madera</div><span class="wpcur"><span class="wpsw" id="wpSw"></span><b id="wpName">Encino claro</b><code id="wpHex">#CDA77E</code></span></div>
+          <div class="wpchips" id="wpWoods" role="group" aria-label="Maderas comunes"></div>
+          <div class="wpmap">
+            <span class="ax ax-t">Gris / ceniza</span>
+            <canvas id="wpMap" width="360" height="150" aria-label="Mapa de tonos de madera: de claro a oscuro y de gris a rojizo" tabindex="0"></canvas>
+            <span class="ax ax-b">Rojizo</span>
+            <div class="ax-x"><span>Claro</span><span>Natural</span><span>Oscuro</span></div>
+            <span class="wpdot" id="wpDot" hidden></span>
+          </div>
+          <div class="seglbl">Tonos lisos y deslavados</div>
+          <div class="wpchips" id="wpNeutrals" role="group" aria-label="Blancos y grises"></div>
+          <p class="help">Toca o arrastra en el mapa para elegir un tono; la veta se dibuja con ese color. Los tonos lisos sirven como madera teñida o deslavada (con veta) o como color uniforme (sin veta).</p>
         </div>
         <p class="help">Espesores comerciales en mm. Las medidas de corte no descuentan el canto; si el canto es de 2 mm, descuéntalo al cortar. Con madera, la columna “Veta” dice en qué medida corre la veta.</p>
       </div>
@@ -328,10 +356,11 @@ const $=id=>document.getElementById(id);
 // ====================== Configuración (largos en cm, separación en mm) ======================
 const DEF={mold:97,hol:2,W:100,D:48,mount:'fuera',rows:3,cmode:'igual',cols:2,rowCols:[2,2,2],hmode:'graduadas',rowH:[],wmode:'iguales',colW:[],gap:3,rev:2,
   slide:'lateral',close:'suave',pull:'boton',ztype:'ras',z:10,rem:4,dest:true,dH:9,dD:1.5,tc:25,vf:1.5,vl:1,
-  mat:'MDF',t:18,tf:18,tb:6,ts:15,tfo:6,finF:'pintado',finS:'igual',finC:'madera',wood:'encino',colF:'#F3EFE7',veta:true,units:'mm'};
+  mat:'MDF',t:18,tf:18,tb:6,ts:15,tfo:6,finF:'pintado',finS:'igual',finC:'madera',woodHex:'#CDA77E',woodXY:null,colF:'#F3EFE7',veta:true,units:'mm'};
 const KEY='comodaDespiece.v2';
 let cfg;
 try{cfg=Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){cfg=Object.assign({},DEF);}
+if(!cfg.woodHex||!/^#[0-9a-f]{6}$/i.test(cfg.woodHex)) cfg.woodHex=DEF.woodHex;
 cfg.rowCols=[...(cfg.rowCols||[])]; cfg.rowH=[...(cfg.rowH||[])]; cfg.colW=[...(cfg.colW||[])];
 function save(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
 const SLIDES=[250,300,350,400,450,500,550];
@@ -498,7 +527,8 @@ function notes(R){
     c.slide==='lateral'?'Rieles a los lados: la caja del cajón mide justo el hueco menos 25.4 mm (12.7 mm por lado). Mejor 1 mm menos que 1 mm más.':'Rieles ocultos: antes de cortar las cajas, revisa la medida que pide el fabricante del riel.',
     'La cubierta va recta, sin moldura en el canto, y sobresale al frente y a los lados. No lleva colchoneta de cambio: el cambiador ya está en la cuna.',
     'Seguridad: fija el mueble al muro con la correa y pon topes a los cajones. Usa pintura o barniz bajo en olor (bajo VOC).'];
-  if(wood) N.splice(5,0,'Veta: en frentes, cubierta, tapa del zócalo y tiras horizontales va acostada; en laterales y tiras verticales va parada. La columna “Veta” dice en qué medida corre.');
+  if(wood) N.splice(5,0,`Tono de la madera: ${woodName(cfg.woodHex)} (${cfg.woodHex.toUpperCase()}). Lleva una muestra al taller para igualar el tinte.`);
+  if(wood) N.splice(6,0,'Veta: en frentes, cubierta, tapa del zócalo y tiras horizontales va acostada; en laterales y tiras verticales va parada. La columna “Veta” dice en qué medida corre.');
   return N;
 }
 
@@ -509,7 +539,7 @@ function seg(id,opts,key,after){
     b.onclick=()=>{cfg[key]=typeof DEF[key]==='number'?+v:v; if(after)after(); update();}; el.appendChild(b);});
 }
 const NUM=['mold','hol','W','D','z','rem','dH','dD','vf','vl'];
-const SEL=['slide','close','pull','tc','mat','t','tf','tb','ts','tfo','finF','finS','finC','wood','colF','rev'];
+const SEL=['slide','close','pull','tc','mat','t','tf','tb','ts','tfo','finF','finS','finC','colF','rev'];
 function fillNums(){NUM.forEach(k=>{const el=$('f-'+k); if(document.activeElement!==el) el.value=toUI(cfg[k]); el.step=IN()?'0.0625':(['W','D','z','rem'].includes(k)?'0.5':'0.1');});
   document.querySelectorAll('.u').forEach(s=>s.textContent=IN()?'pulg':'cm'); document.querySelectorAll('.ug').forEach(s=>s.textContent=IN()?'pulg':'mm');
   const gi=$('f-gap'); if(document.activeElement!==gi) gi.value=gToUI(cfg.gap); $('f-gapR').value=cfg.gap; gi.step=IN()?'0.02':'0.5';}
@@ -651,13 +681,27 @@ function svgSide(R,print){
 }
 
 // ====================== Texturas de madera ======================
-const WOOD={encino:['#CDA77E','#A57A50'],maple:['#E6CDA6','#C8A47A'],pino:['#E0BC8C','#B98A55'],nogal:['#7E5639','#56381F']};
+// Tonos de madera: muestras comunes, tonos lisos y mapa (claro→oscuro × gris→natural→rojizo)
+const WOODS=[['Maple','#E6CDA6'],['Pino','#E0BC8C'],['Encino claro','#CDA77E'],['Roble','#B98A5C'],['Teca','#A0703F'],['Cerezo','#9C5A3A'],['Caoba','#7C3E2A'],['Nogal','#7E5639'],['Wengué','#4A3427'],['Ébano','#2D241F']];
+const NEUTRALS=[['Blanco puro','#F7F7F5'],['Blanco cálido','#F3EEE4'],['Blanco perla','#F3EFE7'],['Hueso','#EDE4D3'],['Blanqueado','#E8DFD2'],['Greige claro','#D9D2C5'],['Greige','#BDB4A6'],['Gris ceniza','#A9A196'],['Gris claro frío','#D3D6D8'],['Gris medio','#A7AAAD'],['Gris cálido','#A69F96'],['Gris oscuro','#6E6F70'],['Grafito','#45474A'],['Carbón','#2E2C2B']];
+const hsl2hex=(h,s,l)=>{const a=s*Math.min(l,1-l), f=n=>{const k=(n+h/30)%12; return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))).toString(16).padStart(2,'0');}; return '#'+f(0)+f(8)+f(4);};
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255);
+function hex2hsl(h){const [r,g,b]=hex2rgb(h), mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, d=mx-mn; let hh=0, ss=0;
+  if(d){ss=d/(1-Math.abs(2*l-1)); hh=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4; hh*=60; if(hh<0) hh+=360;} return [hh,ss,l];}
+function mapColor(x,y){ // x: 0 claro → 1 oscuro · y: 0 gris → 1 rojizo
+  const L=0.93-0.8*x, red=15+12*(1-x), hue=y<0.45?34:34-(34-red)*(y-0.45)/0.55;   // rojizos claros tiran a durazno, no a rosa
+  let sat=y<0.45?0.03+0.29*(y/0.45):0.32+0.08*(y-0.45)/0.55; sat*=1-0.5*Math.pow((L-0.55)/0.42,2);
+  return hsl2hex(hue,Math.max(0,sat),L);
+}
+function woodName(hex){const all=[...WOODS,...NEUTRALS], f=all.find(w=>w[1].toLowerCase()===hex.toLowerCase()); return f?f[0]:'Tono personalizado';}
+function grainOf(hex){const [h,s,l]=hex2hsl(hex); return l<0.24?hsl2hex(h,Math.min(1,s+0.05),Math.min(1,l+0.08)):hsl2hex(h,Math.min(1,s+0.06),Math.max(0,l-0.17));}
 const texCache={};
-function woodTex(sp){
-  if(texCache[sp]) return texCache[sp];
-  const [a,b]=WOOD[sp], cv=document.createElement('canvas'); cv.width=1024; cv.height=256; const g=cv.getContext('2d');
+function woodTex(hex){
+  if(texCache[hex]) return texCache[hex];
+  if(Object.keys(texCache).length>16){Object.values(texCache).forEach(t=>t.dispose()); for(const k in texCache) delete texCache[k];}
+  const a=hex, b=grainOf(hex), cv=document.createElement('canvas'); cv.width=1024; cv.height=256; const g=cv.getContext('2d');
   g.fillStyle=a; g.fillRect(0,0,1024,256);
-  let seed=sp.length*977+13; const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
+  let seed=977+13; const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
   for(let i=0;i<90;i++){
     const y0=rnd()*256, amp=2+rnd()*7, f=0.002+rnd()*0.006, ph=rnd()*6.28, w=0.6+rnd()*2.2;
     g.strokeStyle=b; g.globalAlpha=0.08+rnd()*0.22; g.lineWidth=w; g.beginPath();
@@ -666,7 +710,7 @@ function woodTex(sp){
   g.globalAlpha=0.12; g.fillStyle=b; for(let i=0;i<1600;i++){g.fillRect(rnd()*1024,rnd()*256,4+rnd()*10,0.8);}
   g.globalAlpha=1;
   const t=new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.encoding=THREE.sRGBEncoding;
-  return texCache[sp]=t;
+  return texCache[hex]=t;
 }
 function finishOf(role){ if(role==='front') return cfg.finF; if(role==='side') return cfg.finS==='igual'?cfg.finF:cfg.finS; if(role==='top') return cfg.finC; return 'in'; }
 let matCache={};
@@ -674,11 +718,11 @@ function matFor(p,bx){
   const fin=finishOf(p.role);
   if(fin==='in') return matCache.in||(matCache.in=new THREE.MeshStandardMaterial({color:cfg.mat==='Triplay'?0xE2C9A0:0xE6DFD3,roughness:0.85}));
   if(fin==='pintado'){ const k='p'+cfg.colF; return matCache[k]||(matCache[k]=new THREE.MeshStandardMaterial({color:cfg.colF,roughness:0.55})); }
-  if(!cfg.veta){ const k='w'+cfg.wood; return matCache[k]||(matCache[k]=new THREE.MeshStandardMaterial({color:WOOD[cfg.wood][0],roughness:0.5})); }
+  if(!cfg.veta){ const k='w'+cfg.woodHex; return matCache[k]||(matCache[k]=new THREE.MeshStandardMaterial({color:cfg.woodHex,roughness:0.5})); }
   // madera con veta: la textura se escala a la medida real y se orienta según la veta
   const dims={x:bx.w,y:bx.h,z:bx.d}, thin=Object.keys(dims).reduce((a,k)=>dims[k]<dims[a]?k:a,'x');
   const [u,v]=thin==='x'?['z','y']:thin==='y'?['x','z']:['x','y'];
-  const tx=woodTex(cfg.wood).clone(); tx.needsUpdate=true; tx.center.set(.5,.5);
+  const tx=woodTex(cfg.woodHex).clone(); tx.needsUpdate=true; tx.center.set(.5,.5);
   if(p.grain===v){tx.rotation=Math.PI/2; tx.repeat.set(dims[u]/300,dims[v]/1200);} else tx.repeat.set(dims[u]/1200,dims[v]/300);
   tx.offset.set((bx.x*0.37+bx.y*0.11)%1,(bx.z*0.23)%1);
   return new THREE.MeshStandardMaterial({map:tx,roughness:0.5});
@@ -811,11 +855,11 @@ async function buildPdf(){
   const date=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
   head('Cómoda a medida - hoja de fabricación',`${date} · medidas en ${IN()?'pulgadas':'mm'} · ${cfg.mat} ${cfg.t} mm`);
   doc.setTextColor(29,42,46); doc.setFontSize(10.5);
-  [`Altura total: ${LK(R.H)} (${LK(cfg.mold*10-R.H)} abajo de la moldura)`,`Ancho del mueble: ${LU(R.W)} · fondo: ${LU(R.D)}`,`Cajones: ${R.drawers.length} en ${R.n} filas · frentes ${R.inset?'al ras del marco':'por fuera'} · separación ${LU(R.g)}`,`Rieles: ${LU(R.L)} ${cfg.slide==='lateral'?'a los lados':'ocultos'} · cubierta ${cfg.tc} mm`]
+  [`Altura total: ${LK(R.H)} (${LK(cfg.mold*10-R.H)} abajo de la moldura)`,`Ancho del mueble: ${LU(R.W)} · fondo: ${LU(R.D)}`,`Cajones: ${R.drawers.length} en ${R.n} filas · frentes ${R.inset?'al ras del marco':'por fuera'} · separación ${LU(R.g)}`,`Rieles: ${LU(R.L)} ${cfg.slide==='lateral'?'a los lados':'ocultos'} · cubierta ${cfg.tc} mm`,...(hasWood()?[`Tono de la madera: ${woodName(cfg.woodHex)} (${cfg.woodHex.toUpperCase()})`]:[])]
     .forEach((f,i)=>doc.text(pdfSafe(f),M,31+i*5.5));
-  const imgW=PW-2*M, a3h=imgW*1000/1400;
-  doc.addImage(snap3D('armado',1400,1000),'JPEG',M,55,imgW,a3h);
-  const fr=await svgToPng(svgFront(R,true),1400); const fh=Math.min(297-55-a3h-14,imgW*fr.ratio), fw=fh/fr.ratio; doc.addImage(fr.url,'JPEG',(PW-fw)/2,55+a3h+4,fw,fh);
+  const imgW=PW-2*M, a3h=imgW*1000/1400, top0=hasWood()?60:55;
+  doc.addImage(snap3D('armado',1400,1000),'JPEG',M,top0,imgW,a3h);
+  const fr=await svgToPng(svgFront(R,true),1400); const fh=Math.min(297-top0-a3h-14,imgW*fr.ratio), fw=fh/fr.ratio; doc.addImage(fr.url,'JPEG',(PW-fw)/2,top0+a3h+4,fw,fh);
   doc.addPage(); head('Explosión del mueble','Cada pieza lleva su clave; búscala en el despiece.');
   const e3h=imgW*1100/1400; doc.addImage(snap3D('explosion',1400,1100),'JPEG',M,28,imgW,e3h);
   const sd=await svgToPng(svgSide(R,true),1200); const sh=Math.min(297-28-e3h-14,imgW*sd.ratio), sw=sh/sd.ratio; doc.addImage(sd.url,'JPEG',(PW-sw)/2,28+e3h+4,sw,sh);
@@ -848,6 +892,32 @@ function showPdfMsg(t){const m=$('pdfMsg'); m.hidden=false; m.textContent=t; m.c
 // ====================== Acciones ======================
 $('copy').onclick=async()=>{ try{await navigator.clipboard.writeText(lastText); $('copy').textContent='Despiece copiado'; setTimeout(()=>$('copy').textContent='Copiar despiece',1800);}
   catch(e){const b=$('copyBox'); b.hidden=false; b.value=lastText; b.focus(); b.select();} };
+// ====================== Selector de tono de madera ======================
+function drawWoodMap(){
+  const c=$('wpMap'), g=c.getContext('2d'), W=c.width, H=c.height, img=g.createImageData(W,H);
+  for(let j=0;j<H;j++)for(let i=0;i<W;i++){const [r,gg,b]=hex2rgb(mapColor(i/(W-1),j/(H-1))), k=(j*W+i)*4; img.data[k]=r*255; img.data[k+1]=gg*255; img.data[k+2]=b*255; img.data[k+3]=255;}
+  g.putImageData(img,0,0);
+}
+function chips(el,list){ el.innerHTML=''; list.forEach(([n,h])=>{const b=document.createElement('button'); b.type='button'; b.className='wpchip'; b.dataset.hex=h; b.innerHTML=`<i style="background:${h}"></i>${n}`; b.onclick=()=>setWood(h,null,true); el.appendChild(b);}); }
+function syncWood(){
+  const h=cfg.woodHex; $('wpSw').style.background=h; $('wpName').textContent=woodName(h); $('wpHex').textContent=h.toUpperCase();
+  document.querySelectorAll('.wpchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hex.toLowerCase()===h.toLowerCase())));
+  const dot=$('wpDot'); if(cfg.woodXY){const c=$('wpMap'); dot.hidden=false; dot.style.left=(c.offsetLeft+cfg.woodXY[0]*c.clientWidth)+'px'; dot.style.top=(c.offsetTop+cfg.woodXY[1]*c.clientHeight)+'px'; dot.style.background=h;} else dot.hidden=true;
+}
+function setWood(hex,xy,commit){ cfg.woodHex=hex; cfg.woodXY=xy||null; syncWood(); if(commit){ if(!hasWood()){cfg.finF='madera'; $('f-finF').value='madera';} update(); } }
+(function(){
+  chips($('wpWoods'),WOODS); chips($('wpNeutrals'),NEUTRALS); drawWoodMap();
+  const c=$('wpMap'); let drag=false;
+  const at=e=>{const r=c.getBoundingClientRect(), x=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)), y=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height)); return [x,y];};
+  c.addEventListener('pointerdown',e=>{drag=true; c.setPointerCapture(e.pointerId); const p=at(e); setWood(mapColor(...p),p,false);});
+  c.addEventListener('pointermove',e=>{if(!drag)return; const p=at(e); setWood(mapColor(...p),p,false);});
+  const end=()=>{if(!drag)return; drag=false; setWood(cfg.woodHex,cfg.woodXY,true);};
+  c.addEventListener('pointerup',end); c.addEventListener('pointercancel',end);
+  c.addEventListener('keydown',e=>{const d={ArrowLeft:[-.04,0],ArrowRight:[.04,0],ArrowUp:[0,-.06],ArrowDown:[0,.06]}[e.key]; if(!d)return; e.preventDefault();
+    const p=cfg.woodXY||[0.4,0.45], q=[Math.min(1,Math.max(0,p[0]+d[0])),Math.min(1,Math.max(0,p[1]+d[1]))]; setWood(mapColor(...q),q,true);});
+  new ResizeObserver(syncWood).observe(c);
+})();
+
 // ====================== Guardar y abrir configuraciones ======================
 const SAVES='comodaDespiece.guardadas.v1';
 const PAGE=/github\.io$/.test(location.hostname)?location.origin+location.pathname:'https://ingarmandotirado.github.io/Carpinteria/comoda/';
@@ -921,7 +991,7 @@ function update(rebuildChips=true){
   const R=compute(cfg); current=R;
   fillNums(); dynFields(R); renderKpis(R); renderTables(R);
   $('vfront').innerHTML=svgFront(R,false); $('vside').innerHTML=svgSide(R,false);
-  build3D(R); save();
+  build3D(R); save(); syncWood();
 }
 init3D(); update(); openFromUrl(); setView('iso');
 })();

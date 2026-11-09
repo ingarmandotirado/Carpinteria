@@ -1,5 +1,13 @@
 # Cuarto del bebé 3D
 
+
+## Enlaces
+
+- Modelo del cuarto: https://ingarmandotirado.github.io/Carpinteria/
+- Despiece para el carpintero: https://ingarmandotirado.github.io/Carpinteria/comoda/
+
+El nombre del repositorio lleva **C mayúscula**: GitHub Pages distingue mayúsculas, con `carpinteria` en minúscula da 404.
+
 Modelo 3D interactivo del cuarto del bebé, hecho a medida (three.js). Se abre en el navegador, también en el celular.
 
 **Ver en línea:** se publica con GitHub Pages desde `index.html` (Settings → Pages → rama `main`, carpeta `/`).

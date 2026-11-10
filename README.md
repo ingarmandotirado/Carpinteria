@@ -56,7 +56,11 @@ Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro super
 
 `comoda/configs.json` es la lista pública que ve cualquiera en “Guardar / abrir”. Cada entrada lleva `nombre`, `fecha` y `config` (solo los valores que cambian respecto a la base). Para agregar una, copia su enlace con el botón “Enlace” y pásalo para sumarlo a la lista.
 
-## Muebles a medida
+## Muebles a medida (Don Neto)
+
+Página con la identidad de la mueblería Don Neto: logotipo propio (arco con monograma DN), tipografía Cormorant Garamond y Jost, paleta nogal, lino y latón, en modo claro y oscuro.
+
+**Ambientes del 3D** según el mueble: recámara cálida, recámara nórdica, sala moderna, loft industrial, casa costera, rústico mexicano, oficina en casa y estudio; con piso, muro, zoclo y decoración (TV sobre el mueble de TV, lámpara en el buró, monitor en el escritorio, libros en el librero).
 
 `muebles/index.html` empieza preguntando qué mueble vas a hacer y abre sus menús propios.
 

@@ -171,6 +171,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       <button class="b" id="viewFront">De frente</button>
       <button class="b" id="viewIso">3/4</button>
       <span class="note">Toca un frente para abrir ese cajón.</span>
+      <div class="seg" id="s-fondo" role="group" aria-label="Fondo" style="flex-basis:100%"></div>
     </div>
     <div class="vbar" id="bar-ex" hidden>
       <label for="exf">Separación <input id="exf" type="range" min="0" max="100" value="70"></label>
@@ -356,7 +357,7 @@ const $=id=>document.getElementById(id);
 // ====================== Configuración (largos en cm, separación en mm) ======================
 const DEF={mold:97,hol:2,W:100,D:48,mount:'fuera',rows:3,cmode:'igual',cols:2,rowCols:[2,2,2],hmode:'graduadas',rowH:[],wmode:'iguales',colW:[],gap:3,rev:2,
   slide:'lateral',close:'suave',pull:'boton',ztype:'ras',z:10,rem:4,dest:true,dH:9,dD:1.5,tc:25,vf:1.5,vl:1,
-  mat:'MDF',t:18,tf:18,tb:6,ts:15,tfo:6,finF:'pintado',finS:'igual',finC:'madera',woodHex:'#CDA77E',woodXY:null,colF:'#F3EFE7',veta:true,units:'mm'};
+  mat:'MDF',t:18,tf:18,tb:6,ts:15,tfo:6,finF:'pintado',finS:'igual',finC:'madera',woodHex:'#CDA77E',woodXY:null,fondo:'estudio',colF:'#F3EFE7',veta:true,units:'mm'};
 const KEY='comodaDespiece.v2';
 let cfg;
 try{cfg=Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){cfg=Object.assign({},DEF);}
@@ -559,6 +560,7 @@ function rebuildSegs(){
   seg('s-cols',[[1,'1'],[2,'2'],[3,'3'],[4,'4']],'cols',()=>{cfg.colW=[];});
   seg('s-hmode',[['iguales','Iguales'],['graduadas','Más altos abajo'],['personal','Escribirlos']],'hmode');
   seg('s-wmode',[['iguales','Iguales'],['personal','Escribirlos']],'wmode');
+  seg('s-fondo',[['estudio','Fondo de estudio (contraste)'],['cuarto','Colores reales del cuarto']],'fondo');
   seg('s-ztype',[['ras','Zócalo al ras de los frentes'],['remetido','Zócalo metido'],['frente','El frente de abajo llega al piso']],'ztype');
 }
 function dynFields(R){
@@ -780,9 +782,10 @@ function build3D(R){
   [T3.env,T3.asm,T3.ex].forEach(clearGroup); T3.drawers=[]; T3.exParts=[]; T3.selObj=null; T3.sel.visible=false;
   const M=(c,r)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
   const m0=cfg.mold*10, Wm=R.W*K;
-  const floor=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.2),M(0xE2E2DF,0.4)); floor.rotation.x=-Math.PI/2; floor.position.set(Wm/2,0,0.9); floor.receiveShadow=true; T3.env.add(floor);
-  const wl=new THREE.Mesh(new THREE.PlaneGeometry(3.2,m0*K),M(0xF3EFE7,0.6)); wl.position.set(Wm/2,m0*K/2,-0.001); wl.receiveShadow=true; T3.env.add(wl);
-  const wu=new THREE.Mesh(new THREE.PlaneGeometry(3.2,1.0),M(0xD8C6A5,0.95)); wu.position.set(Wm/2,m0*K+0.5,-0.001); wu.receiveShadow=true; T3.env.add(wu);
+  const real=cfg.fondo==='cuarto';
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.2),M(real?0xE2E2DF:0x8E7A66,0.5)); floor.rotation.x=-Math.PI/2; floor.position.set(Wm/2,0,0.9); floor.receiveShadow=true; T3.env.add(floor);
+  const wl=new THREE.Mesh(new THREE.PlaneGeometry(3.2,m0*K),M(real?0xF3EFE7:0x9C948A,0.6)); wl.position.set(Wm/2,m0*K/2,-0.001); wl.receiveShadow=true; T3.env.add(wl);
+  const wu=new THREE.Mesh(new THREE.PlaneGeometry(3.2,1.0),M(real?0xD8C6A5:0x7F776D,0.95)); wu.position.set(Wm/2,m0*K+0.5,-0.001); wu.receiveShadow=true; T3.env.add(wu);
   const rail=new THREE.Mesh(railGeom(3.2),M(0xF3EFE7,0.45)); rail.rotation.y=-Math.PI/2; rail.position.set(Wm/2+1.6,m0*K,0); rail.castShadow=true; rail.receiveShadow=true; T3.env.add(rail);
   T3.env.add(meshBox({x:R.W/2-1600,y:0,z:0,w:3200,h:82,d:10},M(0xE4DED4,0.3)));
   const dg=R.drawers.map((d,i)=>{const g=new THREE.Group(); T3.asm.add(g); const dr={g,t:prevOpen[i]||0,v:prevOpen[i]||0,open:d.L*0.8*K}; g.userData.dr=dr; T3.drawers.push(dr); return g;});
@@ -800,7 +803,7 @@ function build3D(R){
     else {const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.17,14),metal); bar.rotation.z=Math.PI/2; bar.position.set((d.fx+d.fw/2)*K,cy,zf+0.022); dg[i].add(bar);}});
   dg.forEach(g=>{g.position.z=g.userData.dr.open*g.userData.dr.v;});
   T3.sun.target.position.set(Wm/2,R.H*K/2,0);
-  T3.scene.background=new THREE.Color(css('--paper'));
+  T3.scene.background=new THREE.Color(real?css('--paper'):'#6F675E');
   applyExplode(); applyMode(); syncOpenBtn();
   $('pinfo').textContent='Toca una pieza para ver su clave y medidas. Las claves coinciden con el despiece.';
 }

@@ -402,6 +402,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
           <div class="seglbl">Separación entre frentes (<span class="ug">mm</span>)</div>
           <div class="gaprow"><input id="f-gapR" type="range" min="2" max="50" step="0.5" aria-label="Separación entre frentes"><input id="f-gap" type="number" inputmode="decimal" step="0.5" aria-label="Separación entre frentes, valor"></div>
           <p class="help" id="gapHelp"></p>
+          <label class="f chk" id="w-marco"><input id="f-marco" type="checkbox"> Marco parejo: la misma separación también en laterales, abajo y arriba (bajo la cubierta)</label>
         </div>
         <div class="grid">
           <label class="f" id="w-rev">Holgura alrededor de cada frente<select id="f-rev"><option value="1.5">1.5 mm</option><option value="2">2 mm</option><option value="3">3 mm</option></select></label>
@@ -520,7 +521,7 @@ const $=id=>document.getElementById(id);
 // ====================== Configuración (largos en cm, separación en mm) ======================
 const DEF={mold:97,hol:2,W:100,D:48,mount:'fuera',rows:3,cmode:'igual',cols:2,rowCols:[2,2,2],hmode:'graduadas',rowH:[],wmode:'iguales',colW:[],gap:3,rev:2,
   slide:'lateral',close:'suave',pull:'boton',ztype:'ras',z:10,rem:4,dest:true,dH:9,dD:1.5,tc:25,vf:1.5,vl:1,
-  mat:'MDF',t:18,tf:18,tb:6,ts:15,tfo:6,finF:'pintado',finS:'igual',finC:'madera',woodHex:'#CDA77E',woodXY:null,fondo:'estudio',colF:'#F3EFE7',veta:true,units:'mm'};
+  mat:'MDF',t:18,tf:18,tb:6,ts:15,tfo:6,finF:'pintado',finS:'igual',finC:'madera',woodHex:'#CDA77E',woodXY:null,fondo:'estudio',colF:'#F3EFE7',veta:true,marcoParejo:false,units:'mm'};
 const KEY='comodaDespiece.v2';
 let cfg;
 try{cfg=Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){cfg=Object.assign({},DEF);}
@@ -552,8 +553,9 @@ function compute(c){
   const e=inset?0:Math.min(g/2,3);                 // orilla exterior (frentes por fuera)
   const n=c.rows, colsOf=i=>c.cmode==='igual'?c.cols:(c.rowCols[i]||1);
   const lw=inset?g-2*r:0, listones=inset&&lw>=8;   // tiras del marco entre cajones
-  const yT=inset?Hb-t-r:Hb-e;
-  const yBase=inset?z+t+r:(ztype==='ras'?z+g:z);
+  const F=(inset&&listones&&c.marcoParejo)?Math.max(t,lw):t;
+  const yT=inset?Hb-F-r:Hb-e;
+  const yBase=inset?z+F+r:(ztype==='ras'?z+g:z);
   const extra=(!inset&&ztype==='frente')?z-10:0;
   const Z=yT-yBase-g*(n-1);
   let fh=[];
@@ -568,7 +570,7 @@ function compute(c){
   const shelves=[]; for(let b=1;b<bands.length;b++){const i=bands[b].rows[0]; shelves.push(fy[i]+fh[i]+g/2);}
   bands.forEach((b,bi)=>{b.top=bi===0?y1:shelves[bi-1]-t/2; b.bot=bi===bands.length-1?y0:shelves[bi]+t/2;});
   function colLayout(k){
-    const x0=inset?t+r:e, AW=inset?W-2*t-2*r:W-2*e;
+    const x0=inset?F+r:e, AW=inset?W-2*F-2*r:W-2*e;
     let wf;
     if(c.cmode==='igual'&&c.wmode==='personal'&&k>1){ wf=[]; for(let j=0;j<k-1;j++) wf.push((c.colW[j]||W/k/10)*10); wf.push(AW-g*(k-1)-wf.reduce((a,b)=>a+b,0)); }
     else wf=Array(k).fill((AW-g*(k-1))/k);
@@ -604,14 +606,14 @@ function compute(c){
   if(inset&&g>=4&&!listones) msgs.push(['warn','Con esta separación no cabe tira de marco entre cajones: se verá una ranura (sombra) entre frentes.']);
   const seen=new Set(), out=[]; msgs.forEach(m=>{if(!seen.has(m[1])){seen.add(m[1]); out.push(m);}});
   if(!out.some(m=>m[0]==='bad')) out.unshift(['ok',`Cubierta a ${LK(H)} del piso: ${LK(c.mold*10-H)} abajo de la moldura. Queda ${LK(Math.abs(H-920))} ${H>=920?'arriba':'abajo'} del cambiador de la cuna (92 cm).`]);
-  const R={t,tf,tb,ts,tfo,tc,g,e,r,inset,listones,lw,W,D,H,z,vf,vl,Hb,y0,y1,Di,n,fh:frontH,fy:frontY,bands,shelves,L:Ls,frontZ,boxZ,drawers,ztype,msgs:out,c};
+  const R={t,F,tf,tb,ts,tfo,tc,g,e,r,inset,listones,lw,W,D,H,z,vf,vl,Hb,y0,y1,Di,n,fh:frontH,fy:frontY,bands,shelves,L:Ls,frontZ,boxZ,drawers,ztype,msgs:out,c};
   R.pieces=makePieces(R);
   return R;
 }
 
 // Cada pieza: datos de corte + cajas 3D (mm) + desplazamiento en explosión
 function makePieces(R){
-  const {t,tf,tb,ts,tfo,tc,W,D,Hb,z,vf,vl,Di,c,inset,listones,lw,r,frontZ}=R, P=[];
+  const {t,F,tf,tb,ts,tfo,tc,W,D,Hb,z,vf,vl,Di,c,inset,listones,lw,r,frontZ}=R, P=[];
   const dH=c.dest?c.dH*10:0, dD=c.dest?c.dD*10:0;
   const add=o=>{P.push(Object.assign({canto:'',note:'',role:'in',veta:null},o)); return o;};
   const B=(x,y,z,w,h,d)=>({x,y,z,w,h,d});
@@ -642,9 +644,14 @@ function makePieces(R){
     note:'Canto recto, sin moldura.'+(tc===30?' Se hace con 2 tablas de 15 mm pegadas.':tc===36?' Se hace con 2 tablas de 18 mm pegadas.':''),boxes:[B(-vl,Hb,0,cw,tc,cd)],ex:[0,420,0]});
   if(listones){
     for(let i=0;i<R.n-1;i++){const yc=R.fy[i]-R.g/2;
-      add({grp:'Marco',name:'Tira horizontal del marco',a:W-2*t,b:lw,e:tf,canto:'canto al frente',role:'front',grain:'x',veta:W-2*t,note:`Entre las filas ${i+1} y ${i+2}; su centro a ${LU(yc)} del suelo, al ras de los frentes.`,boxes:[B(t,yc-lw/2,D-tf,W-2*t,lw,tf)],ex:[0,0,300]});}
+      add({grp:'Marco',name:'Tira horizontal del marco',a:W-2*F,b:lw,e:tf,canto:'canto al frente',role:'front',grain:'x',veta:W-2*F,note:`Entre las filas ${i+1} y ${i+2}; su centro a ${LU(yc)} del suelo, al ras de los frentes.`,boxes:[B(F,yc-lw/2,D-tf,W-2*F,lw,tf)],ex:[0,0,300]});}
     R.drawers.filter(d=>d.col>0).forEach(d=>{const ax=d.fx-R.g/2, y0=d.fy-r, h=d.fh+2*r;
       add({grp:'Marco',name:'Tira vertical del marco',a:h,b:lw,e:tf,canto:'canto al frente',role:'front',grain:'y',veta:h,note:`Fila ${d.row+1}; su centro a ${LU(ax)} del lateral izquierdo.`,boxes:[B(ax-lw/2,y0,D-tf,lw,h,tf)],ex:[0,0,300]});});
+    if(F>t){
+      [0,1].forEach(s=>add({grp:'Marco',name:'Tira lateral del marco',a:Hb-t-(z+t),b:F-t,e:tf,canto:'canto al frente',role:'front',grain:'y',veta:Hb-t-(z+t),note:'Junto al lateral, al ras de los frentes; da el mismo ancho de marco que entre cajones.',boxes:[B(s?W-F:t, z+t, D-tf, F-t, Hb-t-(z+t), tf)],ex:[s?220:-220,0,320]}));
+      add({grp:'Marco',name:'Tira superior del marco',a:W-2*F,b:F-t,e:tf,canto:'canto al frente',role:'front',grain:'x',veta:W-2*F,note:'Bajo la tira de amarre, justo debajo de la cubierta.',boxes:[B(F,Hb-F,D-tf,W-2*F,F-t,tf)],ex:[0,160,320]});
+      add({grp:'Marco',name:'Tira inferior del marco',a:W-2*F,b:F-t,e:tf,canto:'canto al frente',role:'front',grain:'x',veta:W-2*F,note:'Sobre el piso del mueble.',boxes:[B(F,z+t,D-tf,W-2*F,F-t,tf)],ex:[0,-160,320]});
+    }
   }
   R.drawers.forEach((d,i)=>{
     const lift=(R.n-1-d.row)*130, side=(d.col-(d.cols-1)/2)*140, fwd=d.L+380;
@@ -687,7 +694,7 @@ function notes(R){
     `Altura total: ${LK(R.H)} del suelo a la parte de arriba de la cubierta. Queda ${LK(c.mold*10-R.H)} abajo de la moldura. Antes de cortar, mide la moldura justo donde va la cómoda.`,
     'Al instalar, nivela la cubierta (no el piso) para que el aire con la moldura quede parejo de lado a lado.',
     c.dest?`En los dos laterales, saca un recorte abajo atrás de ${LU(c.dH*10)} de alto × ${LU(c.dD*10)} de fondo, para que el mueble pase sobre el zoclo y quede pegado al muro.`:'Sin recorte para el zoclo: el mueble queda separado del muro lo que sobresale el zoclo (aprox. 1 cm).',
-    R.inset?`Los frentes van metidos en el mueble, al ras del marco. Deja ${LU(R.r)} de holgura alrededor de cada frente.${R.listones?` Entre cajones van tiras de marco de ${LU(R.lw)} de ancho, al ras de los frentes.`:''}`:`Los frentes van por fuera y tapan el mueble. Separación entre frentes: ${LU(R.g)}; en las orillas: ${LU(R.e)}.`,
+    R.inset?`Los frentes van metidos en el mueble, al ras del marco. Deja ${LU(R.r)} de holgura alrededor de cada frente.${R.listones?` Entre cajones van tiras de marco de ${LU(R.lw)} de ancho, al ras de los frentes.`:''}${R.F>R.t?` Marco parejo: ${LU(R.F)} de marco en laterales, abajo y arriba.`:''}`:`Los frentes van por fuera y tapan el mueble. Separación entre frentes: ${LU(R.g)}; en las orillas: ${LU(R.e)}.`,
     c.slide==='lateral'?'Rieles a los lados: la caja del cajón mide justo el hueco menos 25.4 mm (12.7 mm por lado). Mejor 1 mm menos que 1 mm más.':'Rieles ocultos: antes de cortar las cajas, revisa la medida que pide el fabricante del riel.',
     'La cubierta va recta, sin moldura en el canto, y sobresale al frente y a los lados. No lleva colchoneta de cambio: el cambiador ya está en la cuna.',
     'Seguridad: fija el mueble al muro con la correa y pon topes a los cajones. Usa pintura o barniz bajo en olor (bajo VOC).'];
@@ -710,6 +717,7 @@ function fillNums(){NUM.forEach(k=>{const el=$('f-'+k); if(document.activeElemen
 NUM.forEach(k=>{const el=$('f-'+k); el.addEventListener('input',()=>{const v=parseFloat(String(el.value).replace(',','.')); if(isFinite(v)){cfg[k]=fromUI(v); update(false);}}); el.addEventListener('blur',fillNums);});
 SEL.forEach(k=>{const el=$('f-'+k); el.value=String(cfg[k]); el.addEventListener('change',()=>{cfg[k]=typeof DEF[k]==='number'?+el.value:el.value; update();});});
 $('f-dest').checked=cfg.dest; $('f-dest').addEventListener('change',()=>{cfg.dest=$('f-dest').checked; update();});
+$('f-marco').checked=!!cfg.marcoParejo; $('f-marco').addEventListener('change',()=>{cfg.marcoParejo=$('f-marco').checked; update();});
 $('f-veta').checked=cfg.veta; $('f-veta').addEventListener('change',()=>{cfg.veta=$('f-veta').checked; update();});
 $('f-gapR').addEventListener('input',()=>{cfg.gap=+$('f-gapR').value; $('f-gap').value=gToUI(cfg.gap); update(false);});
 $('f-gap').addEventListener('input',()=>{const v=parseFloat(String($('f-gap').value).replace(',','.')); if(isFinite(v)){cfg.gap=Math.min(50,Math.max(2,gFromUI(v))); $('f-gapR').value=cfg.gap; update(false);}});
@@ -730,6 +738,7 @@ function dynFields(R){
   $('w-cols').hidden=cfg.cmode!=='igual'; $('w-rowcols').hidden=cfg.cmode!=='fila';
   $('w-wmode').hidden=cfg.cmode!=='igual'||cfg.cols<2; $('w-colw').hidden=$('w-wmode').hidden||cfg.wmode!=='personal';
   $('w-rowh').hidden=cfg.hmode!=='personal'; $('w-rem').hidden=R.ztype!=='remetido'; $('w-rev').hidden=!R.inset;
+  $('w-marco').hidden=!(R.inset&&R.listones);
   $('gapHelp').textContent=R.inset?(R.listones?`Entre cajones queda una tira de marco de ${LU(R.lw)} al ras de los frentes, con ${LU(R.r)} de holgura de cada lado.`:'Separación chica: queda solo una ranura entre frentes, sin tira de marco.'):`Separación entre frentes de ${LU(R.g)}. En las orillas quedan ${LU(R.e)}.`;
   const rc=$('rowcols'); if(rc.dataset.k!==String(cfg.rows)){ rc.innerHTML=''; rc.dataset.k=cfg.rows;
     for(let i=0;i<cfg.rows;i++){const l=document.createElement('label'); l.className='f'; l.textContent=`Fila ${i+1}`; const s=document.createElement('select'); s.id='rc-'+i;
@@ -1098,7 +1107,7 @@ function applyCfg(conf,name){
   const keep=cfg.units;
   cfg=Object.assign({},DEF,conf||{}); if(!conf||conf.units==null) cfg.units=keep;
   cfg.rowCols=[...(cfg.rowCols||DEF.rowCols)]; cfg.rowH=[...(cfg.rowH||[])]; cfg.colW=[...(cfg.colW||[])];
-  SEL.forEach(k=>$('f-'+k).value=String(cfg[k])); $('f-dest').checked=!!cfg.dest; $('f-veta').checked=!!cfg.veta;
+  SEL.forEach(k=>$('f-'+k).value=String(cfg[k])); $('f-dest').checked=!!cfg.dest; $('f-marco').checked=!!cfg.marcoParejo; $('f-veta').checked=!!cfg.veta;
   ['rowcols','rowh','colw'].forEach(id=>$(id).dataset.k='');
   curName=name||''; $('saveName').value=curName; showCur(); update();
 }
@@ -1146,7 +1155,7 @@ function openFromUrl(){
 }
 
 let arm=0; $('reset').onclick=()=>{ if(Date.now()-arm>3000){arm=Date.now(); $('reset').textContent='Toca otra vez para restablecer'; setTimeout(()=>$('reset').textContent='Restablecer',3000); return;}
-  const u=cfg.units; cfg=Object.assign({},DEF,{rowCols:[...DEF.rowCols],rowH:[],colW:[],units:u}); SEL.forEach(k=>$('f-'+k).value=String(cfg[k])); $('f-dest').checked=cfg.dest; $('f-veta').checked=cfg.veta;
+  const u=cfg.units; cfg=Object.assign({},DEF,{rowCols:[...DEF.rowCols],rowH:[],colW:[],units:u}); SEL.forEach(k=>$('f-'+k).value=String(cfg[k])); $('f-dest').checked=cfg.dest; $('f-marco').checked=!!cfg.marcoParejo; $('f-veta').checked=cfg.veta;
   ['rowcols','rowh','colw'].forEach(id=>$(id).dataset.k=''); $('reset').textContent='Restablecer'; update(); };
 
 // ====================== Menú de apartados (uno a la vez) ======================

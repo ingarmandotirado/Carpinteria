@@ -167,6 +167,15 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
 .wpdot{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.6);pointer-events:none}
 .foot{grid-column:1/-1;color:var(--muted);font-size:12.5px}
 .foot a,.help a{color:var(--accent)}
+.market{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.mtrack{position:relative;height:30px;border-radius:6px;background:var(--line)}
+.mbar{position:absolute;top:0;height:10px;border-radius:5px}
+.mbar.mk{top:2px;background:color-mix(in srgb,var(--muted) 55%,transparent)}
+.mbar.mi{top:13px;height:7px;background:var(--accent)}
+.mbar.mt{top:21px;height:7px;background:var(--money)}
+.mleg{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted)}
+.mleg i{display:inline-block;width:12px;height:8px;border-radius:3px;margin-right:5px;vertical-align:0}
+.mleg i.mk{background:color-mix(in srgb,var(--muted) 55%,transparent)} .mleg i.mi{background:var(--accent)} .mleg i.mt{background:var(--money)}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
 </style>
@@ -298,6 +307,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       <summary><h2>Costo y precio sugerido</h2><small id="sum-cost"></small></summary>
       <div class="gbody">
         <div class="quotes" id="quotes"></div>
+        <div class="market" id="market"></div>
         <div class="tablewrap"><table class="small" id="costTable"><thead><tr><th>Concepto</th><th>Detalle</th><th class="r">Costo</th></tr></thead><tbody></tbody></table></div>
         <p class="help" id="costHelp"></p>
       </div>
@@ -400,12 +410,12 @@ const PRICE_DEF={
   'Melamina':{15:900,16:950,18:1050,19:1100},
   maciza:{pino:40,cedro:110,parota:115,encino:135},
   canto:8,
-  hw:{rielSuave:180,rielNormal:90,rielPush:230,bisagraSuave:45,bisagraNormal:20,compas:120,boton:35,barra:70,nivelador:25,correa:60,pin:2,pasacables:35,colgador:150,escuadra:6,tornilleria:150},
-  fin:{pintado:150,natural:100},
-  ind:{hora:250,merma:10,util:20,iva:false},
-  tal:{hora:420,merma:15,indirectos:18,util:35,iva:true}
+  hw:{rielSuave:180,rielNormal:90,rielPush:230,bisagraSuave:45,bisagraNormal:20,compas:120,boton:35,barra:70,nivelador:25,correa:60,pin:2,pasacables:35,colgador:150,escuadra:6,tornilleria:100},
+  fin:{pintado:120,natural:90},
+  ind:{hora:160,merma:5,util:15,iva:false},
+  tal:{hora:280,merma:10,indirectos:15,util:30,iva:true}
 };
-const PKEY='muebles.precios.v1';
+const PKEY='muebles.precios.v2';
 let PR; try{PR=Object.assign(clone(PRICE_DEF),JSON.parse(localStorage.getItem(PKEY)||'{}'));}catch(e){PR=clone(PRICE_DEF);}
 ['MDF','Triplay','Melamina','maciza','hw','fin','ind','tal'].forEach(k=>PR[k]=Object.assign(clone(PRICE_DEF[k]),PR[k]||{}));
 const savePR=()=>{try{localStorage.setItem(PKEY,JSON.stringify(PR));}catch(e){}};
@@ -597,8 +607,8 @@ function costOf(R){
       if(q.canto&&m!=='MDF'){ const A=Math.max(q.a,q.b)/1000, B=Math.min(q.a,q.b)/1000; cantoM+=q.canto.startsWith('4')?2*(A+B):q.canto.startsWith('frente y 2')?A+2*B:A; } }
   });
   const lines=[]; let mat=0;
-  Object.entries(sheets).forEach(([k,a])=>{const [m,e]=k.split('|'), pr=(PR[m]||PR.MDF)[e]||(PR.MDF[e]||800), frac=a*1.25/SHEET, nn=frac<=0.5?0.5:Math.ceil(frac), cost=nn*pr; mat+=cost;
-    lines.push(['Tablero',`${m} ${e} mm: ${a.toFixed(2)} m² (con 25% de desperdicio) → ${nn===0.5?'media hoja':nn+' hoja'+(nn>1?'s':'')} × ${money(pr)}`,cost]);});
+  Object.entries(sheets).forEach(([k,a])=>{const [m,e]=k.split('|'), pr=(PR[m]||PR.MDF)[e]||(PR.MDF[e]||800), frac=a*1.25/SHEET, buy=Math.ceil(frac), cost=frac*pr; mat+=cost;
+    lines.push(['Tablero',`${m} ${e} mm: ${a.toFixed(2)} m², con 25% de desperdicio equivale a ${frac.toFixed(2)} hoja × ${money(pr)} (si compras hojas completas: ${buy})`,cost]);});
   Object.entries(solid).forEach(([sp,pt])=>{const pr=PR.maciza[sp], cost=pt*pr; mat+=cost; lines.push(['Madera maciza',`${SPECIES[sp].n}: ${pt.toFixed(1)} pies tabla (con 15% de desperdicio) × ${money(pr)}`,cost]);});
   if(cantoM>0){const cost=cantoM*1.1*PR.canto; mat+=cost; lines.push(['Canto',`${(cantoM*1.1).toFixed(1)} m × ${money(PR.canto)}`,cost]);}
   const HW=hardware(R); let hw=0; HW.forEach(h=>{hw+=h[3]||0;}); lines.push(['Herrajes',HW.map(h=>h[1]+' '+h[0].toLowerCase()).join(', '),hw]);
@@ -609,8 +619,8 @@ function costOf(R){
   lines.push(['Acabado',melam?'Melamina: sin pintura':`${m2.toFixed(1)} m² de ${c.fin==='pintado'?'laca':'sellador y barniz'} (material) × ${money(finPrice)}`,fin]);
   const cons=PR.hw.tornilleria+0.05*mat; lines.push(['Consumibles','Tornillería, pegamento, lijas (y 5% del material)',cons]);
   // horas de trabajo
-  const base={buro:3,tv:6,librero:5,escritorio:5}[c.type]||5, C=R.count;
-  let h=base+R.pieces.length*0.08+C.drawers*1.0+C.doors*0.5+C.flaps*0.7+(melam?0:m2*(c.fin==='pintado'?0.5:0.35));
+  const base={buro:2,tv:3.5,librero:2.5,escritorio:3}[c.type]||3, C=R.count;
+  let h=base+R.pieces.length*0.06+C.drawers*0.7+C.doors*0.4+C.flaps*0.5+(melam?0:m2*(c.fin==='pintado'?0.35:0.25));
   if(c.matKind==='maciza') h*=1.5;
   h=Math.round(h*2)/2;
   const direct=mat+hw+fin+cons;
@@ -795,7 +805,29 @@ function renderCost(R){
     +card('Taller profesional','Con equipo, diseño, garantía y factura.',C.tal,[[`Material y herrajes (+${Tt.merma}% merma)`,C.tal.dir],[`Mano de obra (${C.h} h × ${money(Tt.hora)})`,C.tal.mo],[`Gastos del taller (${Tt.indirectos}%)`,C.tal.ind],[`Utilidad (${Tt.util}%)`,C.tal.util],...(Tt.iva?[['IVA 16%',C.tal.iva]]:[])]);
   const tb=$('costTable').querySelector('tbody');
   tb.innerHTML=C.lines.map(([a,b,c])=>`<tr><td>${a}</td><td>${b}</td><td class="n r">${money(c)}</td></tr>`).join('')+`<tr class="tot"><td>Costo directo</td><td>Sin mano de obra ni utilidad</td><td class="n r">${money(C.direct)}</td></tr>`;
-  $('costHelp').innerHTML=`Horas estimadas: ${C.h} (corte, armado, cajones, puertas y acabado${cfg.matKind==='maciza'?'; madera maciza ×1.5 por cepillado y ensambles':''}). Precios de material y tarifas son de referencia: ajústalos en “Precios de referencia” con tu maderería y tu zona. Referencias públicas 2026: carpintería en Culiacán con promedio de $8,725 por trabajo (de $3,950 a $13,500, <a href="https://www.habitissimo.com.mx/presupuesto/carpinteros/sinaloa/culiacan" target="_blank" rel="noopener">Habitissimo</a>); muebles a medida en México de $6,000 a $20,000 y mano de obra de $200 a $450 por hora (<a href="https://prummo.app/es-MX/guias/cuanto-cobra-un-carpintero" target="_blank" rel="noopener">Prummo</a>).`;
+  renderMarket(R);
+  $('costHelp').innerHTML=`Horas estimadas: ${C.h} (corte, armado, cajones, puertas y acabado${cfg.matKind==='maciza'?'; madera maciza ×1.5 por cepillado y ensambles':''}). El material se cobra por la parte de hoja que se usa. Precios y tarifas están calibrados con muebles terminados del mercado; ajústalos en “Precios de referencia” con tu maderería y tu zona. Referencias públicas 2026: carpintería en Culiacán con promedio de $8,725 por trabajo (de $3,950 a $13,500, <a href="https://www.habitissimo.com.mx/presupuesto/carpinteros/sinaloa/culiacan" target="_blank" rel="noopener">Habitissimo</a>); muebles a medida en México de $6,000 a $20,000 y mano de obra de $200 a $450 por hora (<a href="https://prummo.app/es-MX/guias/cuanto-cobra-un-carpintero" target="_blank" rel="noopener">Prummo</a>).`;
+}
+
+// ====================== Referencia de mercado (muebles terminados, México, nov 2026) ======================
+const MARKET={
+  buro:{MDF:[['Tiendas, línea básica o armable',500,2000],['Tiendas, diseño de marca',3300,7000]],pino:[['Tiendas y Mercado Libre',500,3000],['Artesanal o de diseño',6000,15000]],parota:[['Tiendas de diseño y Mercado Libre',5000,12000]],encino:[['Tiendas de diseño',8000,12000]],cedro:[['Sin muestra suficiente; se usa parota como referencia',5000,12000]]},
+  tv:{MDF:[['180 cm, línea básica',2500,4500],['Centro de entretenimiento 180 × 180 cm',9900,11000]],parota:[['Con estructura de acero',10000,15500],['Diseño',20000,30000]],encino:[['Mercado Libre y tiendas',3900,18600]],pino:[['Sin muestra suficiente; se usa encino como referencia',3900,14900]],cedro:[['Sin muestra suficiente; se usa parota como referencia',10000,20000]]},
+  librero:{MDF:[['Tiendas',700,3500]],pino:[['Tiendas y Mercado Libre',1000,8000]],parota:[['Fabricante con acero',4000,8000]],encino:[['Sin muestra suficiente; se usa pino como referencia',1000,8000]],cedro:[['Sin muestra suficiente; se usa pino como referencia',1000,8000]]},
+  escritorio:{MDF:[['120 cm con cajones',2000,7000]],pino:[['Madera maciza, económico a gama media',1800,13400]],parota:[['Madera maciza, gama media',5000,13400]],encino:[['Madera maciza, gama media',5000,13400]],cedro:[['Madera maciza, gama media',5000,13400]]}
+};
+const MSRC=[['Liverpool','https://www.liverpool.com.mx/tienda/pdp/buro-wendy-de-mdf/1187294793'],['IKEA','https://www.ikea.com/mx/es/p/tarva-buro-pino-50219609/'],['Mercado Libre','https://listado.mercadolibre.com.mx/buro-madera-parota'],['Mate Design','https://matedesign.com.mx/products/buro-barcelo'],['Home Depot','https://www.homedepot.com.mx/p/virtual-muebles-mueble-para-tv-para-55-pulgadas-mdf-habano-180-x-180-x-40-cm-7707062301665-215902'],['Casa Ferro','https://casaferro.com.mx/collections/libreros-de-madera'],['Muebla','https://muebla.com.mx/collections/muebles-de-tv']];
+function marketFor(){ const m=MARKET[cfg.type]; if(!m) return null; return cfg.matKind==='maciza'?{label:SPECIES[cfg.species].n+' maciza',rows:m[cfg.species]||[]}:{label:'MDF y tableros',rows:m.MDF}; }
+function renderMarket(R){
+  const mk=marketFor(), el=$('market'); if(!mk||!mk.rows.length){el.innerHTML=''; return;}
+  const lo=Math.min(...mk.rows.map(r=>r[1])), hi=Math.max(...mk.rows.map(r=>r[2])), top=Math.max(hi,R.cost.tal.hi)*1.05;
+  const pos=v=>Math.max(0,Math.min(100,v/top*100));
+  const bar=(a,b,cls)=>`<span class="mbar ${cls}" style="left:${pos(a)}%;width:${Math.max(1.5,pos(b)-pos(a))}%"></span>`;
+  el.innerHTML=`<div class="seglbl">Precio de mercado · ${TYPES[cfg.type].name.toLowerCase()} de ${mk.label.toLowerCase()} (muebles terminados)</div>
+  <div class="mtrack">${mk.rows.map(r=>bar(r[1],r[2],'mk')).join('')}${bar(R.cost.ind.lo,R.cost.ind.hi,'mi')}${bar(R.cost.tal.lo,R.cost.tal.hi,'mt')}</div>
+  <div class="mleg"><span><i class="mk"></i>Mercado</span><span><i class="mi"></i>Independiente</span><span><i class="mt"></i>Taller</span></div>
+  <table class="small"><tbody>${mk.rows.map(r=>`<tr><td>${r[0]}</td><td class="n r">${money(r[1])} a ${money(r[2])}</td></tr>`).join('')}</tbody></table>
+  <p class="help">Muestra de precios publicados en noviembre de 2026 (${MSRC.map(([n,u])=>`<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(', ')}). Un mueble a medida suele quedar entre la línea básica de tienda y el de diseño: cuesta más que uno armable de fábrica, pero menos que una pieza de marca.</p>`;
 }
 
 // ====================== Precios editables ======================
@@ -811,7 +843,7 @@ function renderPrices(){
   h+=sec('Acabado · material por m² (la mano de obra va en las horas)',inp('Laca o pintura','fin.pintado',10)+inp('Sellador y barniz','fin.natural',10));
   h+=sec('Carpintero independiente',inp('Tarifa por hora','ind.hora',10)+inp('Merma de material %','ind.merma')+inp('Utilidad %','ind.util')+chkP('Cobra con factura (IVA)','ind.iva'));
   h+=sec('Taller profesional',inp('Tarifa por hora','tal.hora',10)+inp('Merma de material %','tal.merma')+inp('Gastos del taller %','tal.indirectos')+inp('Utilidad %','tal.util')+chkP('Cobra con factura (IVA)','tal.iva'));
-  h+=`<div class="actions"><button class="b" id="pricesReset">Volver a los precios de referencia</button></div><p class="help">Valores de partida: MDF 18 mm alrededor de $800 por hoja (publicado entre $480 y $900 en tiendas en línea), parota alrededor de $115 y encino alrededor de $135 por pie tabla; pino y cedro son estimados. Las tarifas por hora siguen el rango nacional de $200 a $450. Se guardan solo en este dispositivo.</p>`;
+  h+=`<div class="actions"><button class="b" id="pricesReset">Volver a los precios de referencia</button></div><p class="help">Valores de partida: MDF 18 mm alrededor de $800 por hoja (publicado entre $480 y $900 en tiendas en línea), parota alrededor de $115 y encino alrededor de $135 por pie tabla; pino y cedro son estimados. Tarifas calibradas con un estudio de mercado de muebles terminados: $160 por hora para independiente y $280 para taller (el rango nacional publicado es de $200 a $450; en Sinaloa suele ser menor). El material se cobra por la parte de hoja que se usa, con 25% de desperdicio. Se guardan solo en este dispositivo.</p>`;
   $('priceBody').innerHTML=h;
   $('priceBody').querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('input',()=>{const v=parseFloat(el.value); if(!isFinite(v))return; const ks=el.dataset.p.split('.'); let o=PR; ks.slice(0,-1).forEach(k=>o=o[k]); o[ks[ks.length-1]]=v; savePR(); refreshCost();}));
   $('priceBody').querySelectorAll('input[data-pc]').forEach(el=>el.onchange=()=>{const ks=el.dataset.pc.split('.'); PR[ks[0]][ks[1]]=el.checked; savePR(); refreshCost();});

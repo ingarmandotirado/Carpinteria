@@ -66,3 +66,16 @@ Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro super
 - **Costo aproximado y precio sugerido** para Sinaloa en dos categorías: carpintero independiente y taller profesional. Material, herrajes, acabado, horas, merma, gastos, utilidad e IVA; todos los precios son editables.
 - Armado 3D con cajones y puertas que abren, explosión con claves, alzado y corte, mm o pulgadas, tono de madera, guardar con nombre, enlaces y PDF (con o sin costos).
 - `muebles/configs.json` es la lista pública de ejemplos.
+
+### Estudio de mercado (noviembre 2026)
+
+Precios publicados de muebles terminados en México, usados para calibrar tarifas y márgenes y mostrados en la página para comparar:
+
+| Mueble | MDF / tablero | Madera maciza |
+|---|---|---|
+| Buró | $500–2,000 básico · $3,300–7,000 diseño | Pino $500–3,000 · parota $5,000–12,000 |
+| Mueble de TV 180 cm | $2,500–4,500 básico · $9,900–11,000 centro de entretenimiento | Encino $3,900–18,600 · parota $10,000–30,000 |
+| Librero | $700–3,500 | Pino $1,000–8,000 |
+| Escritorio 120 cm | $2,000–7,000 | $1,800–13,400 |
+
+Fuentes: Liverpool, IKEA, Mercado Libre, Home Depot, Mate Design, Casa Ferro, Muebla, Flamingo, Santa Cruz Woodworks, Amazon México, Sears.

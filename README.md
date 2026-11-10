@@ -56,6 +56,10 @@ Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro super
 
 `comoda/configs.json` es la lista pública que ve cualquiera en “Guardar / abrir”. Cada entrada lleva `nombre`, `fecha` y `config` (solo los valores que cambian respecto a la base). Para agregar una, copia su enlace con el botón “Enlace” y pásalo para sumarlo a la lista.
 
+## Diseño en todas las páginas
+
+Las tres páginas (recámara infantil, cómoda y muebles a medida) comparten la identidad Don Neto y su barra de marca. En computadora se organizan de izquierda a derecha: menú de apartados, opciones del apartado elegido (uno a la vez) y el visor 3D; en celular el menú es una tira horizontal y el visor va arriba.
+
 ## Muebles a medida (Don Neto)
 
 Página con la identidad de la mueblería Don Neto: logotipo propio (arco con monograma DN), tipografía Cormorant Garamond y Jost, paleta nogal, lino y latón, en modo claro y oscuro.

@@ -201,6 +201,48 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
 .mleg i.mk{background:color-mix(in srgb,var(--muted) 55%,transparent)} .mleg i.mi{background:var(--brass)} .mleg i.mt{background:var(--money)}
 .foot{grid-column:1/-1;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between}
 .foot a,.help a{color:var(--brass)}
+/* Menú de apartados: izquierda a derecha en escritorio (menú · opciones · visor), tira horizontal en celular */
+.rail{display:flex;gap:2px}
+.rail button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;font:inherit;color:var(--muted);background:transparent;border:0;cursor:pointer;padding:10px 12px;flex:none}
+.rail button span{font:500 12.5px var(--f-body);letter-spacing:.14em;text-transform:uppercase}
+.rail button small{font-size:12px;color:var(--muted);opacity:.85;max-width:22ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail button:hover{color:var(--ink)}
+.rail button[aria-current="true"]{color:var(--ink)}
+.rail button[aria-current="true"] span{color:var(--ink)}
+.wrap.sectioned details.g>summary{cursor:default;padding-bottom:8px}
+.wrap.sectioned details.g>summary::after{content:none}
+.wrap.sectioned details.g{border-top:2px solid var(--brass)}
+@media (min-width:1100px){
+  .wrap.sectioned{grid-template-columns:190px minmax(340px,410px) minmax(0,1fr);grid-template-areas:"head head head" "cat cat cat" "rail tool view" "foot foot foot"}
+  .wrap.sectioned.widepanel{grid-template-columns:190px minmax(0,1.25fr) minmax(0,1fr)}
+  .wrap.sectioned>header.top{grid-area:head} .wrap.sectioned>.catalog{grid-area:cat} .wrap.sectioned>.rail{grid-area:rail} .wrap.sectioned>.tool{grid-area:tool} .wrap.sectioned>.viewer{grid-area:view} .wrap.sectioned>.foot{grid-area:foot}
+  .wrap.sectioned>.rail{flex-direction:column;position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);align-self:start;border-right:1px solid var(--line);padding-right:8px}
+  .wrap.sectioned>.rail button{border-left:2px solid transparent;width:100%}
+  .wrap.sectioned>.rail button[aria-current="true"]{border-left-color:var(--brass);background:var(--sheet)}
+  .wrap.sectioned>.viewer{top:calc(env(safe-area-inset-top,0px) + 84px)}
+  .wrap.sectioned .stage{height:calc(100vh - 290px);min-height:420px}
+}
+@media (min-width:900px) and (max-width:1099px){
+  .wrap.sectioned{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"head head" "cat cat" "rail rail" "tool view" "foot foot"}
+  .wrap.sectioned>header.top{grid-area:head} .wrap.sectioned>.catalog{grid-area:cat} .wrap.sectioned>.rail{grid-area:rail} .wrap.sectioned>.tool{grid-area:tool} .wrap.sectioned>.viewer{grid-area:view} .wrap.sectioned>.foot{grid-area:foot}
+}
+@media (max-width:1099px){
+  .wrap.sectioned>.rail{flex-direction:row;overflow-x:auto;scrollbar-width:none;position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line);margin-inline:-4px}
+  .wrap.sectioned>.rail::-webkit-scrollbar{display:none}
+  .wrap.sectioned>.rail button{border-bottom:2px solid transparent;padding:10px 12px 8px}
+  .wrap.sectioned>.rail button small{display:none}
+  .wrap.sectioned>.rail button[aria-current="true"]{border-bottom-color:var(--brass)}
+}
+@media (max-width:899px){ .wrap.sectioned>.viewer{order:1} .wrap.sectioned>.rail{order:2} .wrap.sectioned>.tool{order:3} .wrap.sectioned>.foot{order:4} }
+@media (min-width:1100px){ .wrap.sectioned:not(.widepanel) .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:899px){
+  .brandbar{position:relative;top:0;padding-block:8px}
+  .brand svg{width:34px;height:34px} .brand b{font-size:21px} .brand small{font-size:9.5px}
+  .navlinks{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;width:100%;gap:16px}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{font-size:11.5px;white-space:nowrap}
+  .wrap.sectioned>.rail{top:env(safe-area-inset-top,0px)}
+}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto;transition:none!important}}
 </style>
@@ -228,6 +270,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
 
   <section class="catalog" id="catalog" aria-label="Elige el mueble"></section>
 
+  <nav class="rail" id="rail" aria-label="Apartados" hidden></nav>
   <section class="viewer" id="viewer" aria-label="Vista del mueble" hidden>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-tab="armado">Armado 3D</button>
@@ -257,7 +300,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
     <div class="vbar" id="bar-svg" hidden><span class="note" id="svgnote">Cotas en mm.</span></div>
   </section>
 
-  <div class="col" id="tool" hidden>
+  <div class="col tool" id="tool" hidden>
     <section class="saves" id="saves" hidden aria-label="Configuraciones guardadas">
       <div class="savehead"><h2>Configuraciones</h2><span class="help" id="curName"></span></div>
       <div class="saverow">
@@ -279,7 +322,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
     </div>
     <div class="msgs" id="msgs"></div>
 
-    <details class="g" open>
+    <details class="g" data-label="Medidas" open>
       <summary><h2 id="typeTitle">Medidas y criterios</h2><small id="sum-type"></small></summary>
       <div class="gbody">
         <ul class="tips" id="tips"></ul>
@@ -287,7 +330,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       </div>
     </details>
 
-    <details class="g">
+    <details class="g" data-label="Material">
       <summary><h2>Material y acabado</h2><small id="sum-mat"></small></summary>
       <div class="gbody">
         <div><div class="seglbl">Material principal</div><div class="seg" id="s-matKind"></div></div>
@@ -323,7 +366,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       </div>
     </details>
 
-    <details class="g">
+    <details class="g" data-label="Cajones y puertas">
       <summary><h2>Cajones, puertas y herrajes</h2><small id="sum-hw"></small></summary>
       <div class="gbody">
         <div>
@@ -337,7 +380,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       </div>
     </details>
 
-    <details class="g" open>
+    <details class="g" data-label="Costo y precio" data-wide="1" open>
       <summary><h2>Costo y precio sugerido</h2><small id="sum-cost"></small></summary>
       <div class="gbody">
         <div class="quotes" id="quotes"></div>
@@ -347,12 +390,12 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       </div>
     </details>
 
-    <details class="g">
+    <details class="g" data-label="Precios" data-wide="1">
       <summary><h2>Precios de referencia</h2><small>editables, en pesos</small></summary>
       <div class="gbody" id="priceBody"></div>
     </details>
 
-    <details class="g" open>
+    <details class="g" data-label="Despiece" data-wide="1" open>
       <summary><h2>Despiece</h2><small id="sum-desp"></small></summary>
       <div class="gbody">
         <div class="tablewrap"><table id="cut"><thead></thead><tbody></tbody></table></div>
@@ -367,12 +410,12 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       </div>
     </details>
 
-    <details class="g" open>
+    <details class="g" data-label="Herrajes" data-wide="1" open>
       <summary><h2>Herrajes</h2></summary>
       <div class="gbody"><div class="tablewrap"><table id="hw"><thead><tr><th>Herraje</th><th>Cant.</th><th>Qué pedir</th></tr></thead><tbody></tbody></table></div></div>
     </details>
 
-    <details class="g" open>
+    <details class="g" data-label="Notas" open>
       <summary><h2>Notas para el carpintero</h2></summary>
       <div class="gbody"><ul class="notes" id="notes"></ul></div>
     </details>
@@ -706,7 +749,7 @@ function renderCatalog(){
 function openType(t){ cfg.type=t; save(); showTool(); update(); setView('iso'); }
 function showTool(){
   const has=!!cfg.type;
-  $('catalog').hidden=has; $('viewer').hidden=!has; $('tool').hidden=!has; $('hdrActions').hidden=!has;
+  $('catalog').hidden=has; $('viewer').hidden=!has; $('tool').hidden=!has; $('rail').hidden=!has; $('hdrActions').hidden=!has;
   $('title').textContent=has?TYPES[cfg.type].name:'Diseña tu mueble';
   $('eyebrow').textContent=has?'Hecho a la medida · Don Neto':'Hecho a la medida';
   $('subtitle').textContent=has?'Ajusta medidas, maderas y acabados; el despiece, los herrajes y el precio se recalculan al momento.':'Elige la pieza, ajusta medidas, maderas y acabados, y mírala en su espacio antes de fabricarla.';
@@ -1196,7 +1239,7 @@ $('pdfBtn').onclick=async()=>{const btn=$('pdfBtn'); if(!window.jspdf||!T3){show
     showPdfMsg(`PDF listo: ${name}, ${doc.getNumberOfPages()} páginas. Si no se descargó, abre la herramienta desde GitHub o en el navegador.`);}
   catch(err){showPdfMsg('No se pudo generar el PDF: '+err.message);}
   btn.disabled=false; btn.textContent='Generar PDF';};
-function showPdfMsg(t){const m=$('pdfMsg'); m.hidden=false; m.textContent=t; m.closest('details').open=true; m.scrollIntoView({block:'nearest'});}
+function showPdfMsg(t){const m=$('pdfMsg'); m.hidden=false; m.textContent=t; if(RAILC) RAILC.reveal(m); m.scrollIntoView({block:'nearest'});}
 
 // ====================== Acciones ======================
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText(lastText); $('copy').textContent='Despiece copiado'; setTimeout(()=>$('copy').textContent='Copiar despiece',1800);}catch(e){const b=$('copyBox'); b.hidden=false; b.value=lastText; b.focus(); b.select();}};
@@ -1238,6 +1281,27 @@ $('saveName').addEventListener('keydown',e=>{if(e.key==='Enter') $('saveDo').cli
 function openFromUrl(){let q=null; try{q=new URLSearchParams(location.search).get('c');}catch(e){} if(!q) return;
   try{const o=JSON.parse(b64d(q)); if(applySnap(o.c,o.n||'')){$('saves').hidden=false; renderSaves(); saveMsg(`Abriste “${o.n||'mueble compartido'}” desde un enlace. Toca Guardar para tenerlo en tu lista.`);}}catch(e){}}
 
+// ====================== Menú de apartados (uno a la vez) ======================
+function setupRail(tool,key){
+  const rail=$('rail'), secs=[...tool.querySelectorAll(':scope > details.g')];
+  secs.forEach((d,i)=>{d.dataset.sec=d.dataset.sec||('s'+i); d.open=true; const sm=d.querySelector('summary'); sm.addEventListener('click',e=>e.preventDefault()); sm.tabIndex=-1;});
+  let cur=null; try{cur=localStorage.getItem(key);}catch(e){}
+  if(!secs.some(d=>d.dataset.sec===cur)) cur=secs[0].dataset.sec;
+  function show(id){ cur=id; const sel=secs.find(d=>d.dataset.sec===id);
+    secs.forEach(d=>{d.hidden=d!==sel; d.open=true;});
+    rail.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.sec===id)));
+    document.querySelector('.wrap').classList.toggle('widepanel',!!(sel&&sel.dataset.wide));
+    try{localStorage.setItem(key,id);}catch(e){} }
+  function refresh(){
+    rail.innerHTML=secs.map(d=>`<button type="button" data-sec="${d.dataset.sec}" aria-current="${d.dataset.sec===cur}"><span>${d.dataset.label||d.querySelector('summary h2').textContent}</span><small>${(d.querySelector('summary small')||{}).textContent||''}</small></button>`).join('');
+    rail.querySelectorAll('button').forEach(b=>b.onclick=()=>{show(b.dataset.sec); if(innerWidth<1100){const y=tool.getBoundingClientRect().top+scrollY-120; if(scrollY>y) scrollTo({top:y,behavior:'smooth'});}});
+  }
+  document.querySelector('.wrap').classList.add('sectioned');
+  refresh(); show(cur);
+  return {show,refresh,reveal:el=>{const d=el.closest('details.g'); if(d) show(d.dataset.sec);}};
+}
+
+let RAILC=null;
 // ====================== Ciclo ======================
 function update(rebuild=true){
   if(!cfg.type) return;
@@ -1245,6 +1309,7 @@ function update(rebuild=true){
   const R=compute(); current=R;
   if(rebuild) renderMenus();
   renderAll(R); build3D(R); save(); syncWood(); renderAmbRow();
+  if(!RAILC) RAILC=setupRail($('tool'),'muebles.sec'); else RAILC.refresh();
 }
 renderCatalog(); renderPrices(); init3D(); showTool(); if(cfg.type){update(); setView('iso');} openFromUrl();
 })();

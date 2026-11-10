@@ -243,6 +243,53 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
   .navlinks a{font-size:11.5px;white-space:nowrap}
   .wrap.sectioned>.rail{top:env(safe-area-inset-top,0px)}
 }
+/* El visor 3D es la pieza principal: siempre a la vista mientras se edita */
+.wrap.sectioned>.viewer{display:flex;flex-direction:column}
+.wrap.sectioned>.viewer>.stage{flex:1 1 auto;height:auto;min-height:0}
+.wrap.sectioned header.top{padding-bottom:12px}
+@media (min-width:1100px){
+  .wrap.sectioned{grid-template-columns:168px minmax(0,1fr) minmax(330px,390px);grid-template-areas:"head head head" "cat cat cat" "rail view tool" "foot foot foot";column-gap:20px}
+  .wrap.sectioned.widepanel{grid-template-columns:168px minmax(0,1fr) minmax(460px,560px)}
+  .wrap.sectioned header.top .sub{display:none}
+  .wrap.sectioned header.top h1{font-size:40px}
+  .wrap.sectioned>.viewer{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);height:calc(100vh - 92px);min-height:480px}
+  .wrap.sectioned>.rail{top:calc(env(safe-area-inset-top,0px) + 76px)}
+  .wrap.sectioned:not(.widepanel) .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (min-width:900px) and (max-width:1099px){
+  .wrap.sectioned{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-areas:"head head" "cat cat" "view rail" "view tool" "foot foot";grid-template-rows:auto auto auto 1fr auto}
+  .wrap.sectioned>.viewer{position:sticky;top:12px;height:calc(100vh - 24px);align-self:start}
+  .wrap.sectioned>.rail{position:static}
+}
+@media (max-width:899px){
+  .wrap.sectioned>.viewer{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;height:min(46vh,430px);border-radius:0 0 4px 4px;box-shadow:0 6px 16px rgba(0,0,0,.12)}
+  .wrap.sectioned>.viewer .vbar{padding:6px 8px;gap:4px 6px}
+  .wrap.sectioned>.viewer .vbar .note,.wrap.sectioned>.viewer .pinfo{display:none}
+  .wrap.sectioned>.viewer .tabs .tab{padding:9px 10px 7px}
+  .wrap.sectioned>.rail{top:calc(env(safe-area-inset-top,0px) + min(46vh,430px));z-index:5}
+}
+@media (min-width:1100px){
+  .wrap.sectioned>.tool{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);max-height:calc(100vh - 92px);overflow-y:auto;overscroll-behavior:contain;padding-right:6px;scrollbar-width:thin}
+}
+@media (min-width:900px) and (max-width:1099px){
+  .wrap.sectioned>.tool{max-height:calc(100vh - 90px);overflow-y:auto;overscroll-behavior:contain}
+}
+@media (max-width:899px){
+  .wrap.sectioned>.viewer{height:min(52vh,470px)}
+  .wrap.sectioned>.rail{top:calc(env(safe-area-inset-top,0px) + min(52vh,470px))}
+  .wrap.sectioned>.viewer .vbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .wrap.sectioned>.viewer .vbar::-webkit-scrollbar{display:none}
+  .wrap.sectioned>.viewer .vbar button.b,.wrap.sectioned>.viewer .vbar .seg button,.wrap.sectioned>.viewer .amb{font-size:12px;padding:5px 9px;flex:none}
+  .wrap.sectioned>.viewer .vbar .seg,.wrap.sectioned>.viewer .ambrow{flex:none;flex-basis:auto;flex-wrap:nowrap}
+  .wrap.sectioned>.viewer .vbar label{flex:none;font-size:12px}
+}
+@media (min-width:1100px){
+  .wrap.sectioned>.viewer{position:relative;top:0;height:var(--wsh,calc(100vh - 92px))}
+  .wrap.sectioned>.tool{position:relative;top:0;max-height:var(--wsh,calc(100vh - 92px))}
+  .wrap.sectioned>.rail{position:relative;top:0;max-height:var(--wsh,calc(100vh - 92px));overflow-y:auto}
+  .wrap.sectioned>.foot{display:none}
+  .wrap.sectioned{padding-block:16px 12px}
+}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto;transition:none!important}}
 </style>
@@ -1294,8 +1341,11 @@ function setupRail(tool,key){
     rail.querySelectorAll('button').forEach(b=>b.onclick=()=>{show(b.dataset.sec); if(innerWidth<1100){const y=tool.getBoundingClientRect().top+scrollY-120; if(scrollY>y) scrollTo({top:y,behavior:'smooth'});}});
   }
   document.querySelector('.wrap').classList.add('sectioned');
-  refresh(); show(cur);
-  return {show,refresh,reveal:el=>{const d=el.closest('details.g'); if(d) show(d.dataset.sec);}};
+  // en escritorio, visor y opciones ocupan justo el alto de la pantalla: el mueble nunca sale de la vista
+  function fit(){ const v=document.querySelector('.viewer'); if(!v||v.hidden) return; const top=v.getBoundingClientRect().top+scrollY; document.documentElement.style.setProperty('--wsh',Math.max(420,innerHeight-top-14)+'px'); }
+  addEventListener('resize',fit); if(document.fonts) document.fonts.ready.then(fit);
+  refresh(); show(cur); requestAnimationFrame(fit);
+  return {show,refresh:()=>{refresh(); requestAnimationFrame(fit);},reveal:el=>{const d=el.closest('details.g'); if(d) show(d.dataset.sec);}};
 }
 
 let RAILC=null;

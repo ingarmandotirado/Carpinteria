@@ -400,7 +400,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
         <div id="w-colw" hidden><div class="seglbl">Ancho de cada frente, <span class="u">cm</span> (de izquierda a derecha; el último se ajusta solo)</div><div class="rowsets" id="colw"></div></div>
         <div>
           <div class="seglbl">Separación entre frentes (<span class="ug">mm</span>)</div>
-          <div class="gaprow"><input id="f-gapR" type="range" min="2" max="25" step="0.5" aria-label="Separación entre frentes"><input id="f-gap" type="number" inputmode="decimal" step="0.5" aria-label="Separación entre frentes, valor"></div>
+          <div class="gaprow"><input id="f-gapR" type="range" min="2" max="50" step="0.5" aria-label="Separación entre frentes"><input id="f-gap" type="number" inputmode="decimal" step="0.5" aria-label="Separación entre frentes, valor"></div>
           <p class="help" id="gapHelp"></p>
         </div>
         <div class="grid">
@@ -712,7 +712,7 @@ SEL.forEach(k=>{const el=$('f-'+k); el.value=String(cfg[k]); el.addEventListener
 $('f-dest').checked=cfg.dest; $('f-dest').addEventListener('change',()=>{cfg.dest=$('f-dest').checked; update();});
 $('f-veta').checked=cfg.veta; $('f-veta').addEventListener('change',()=>{cfg.veta=$('f-veta').checked; update();});
 $('f-gapR').addEventListener('input',()=>{cfg.gap=+$('f-gapR').value; $('f-gap').value=gToUI(cfg.gap); update(false);});
-$('f-gap').addEventListener('input',()=>{const v=parseFloat(String($('f-gap').value).replace(',','.')); if(isFinite(v)){cfg.gap=Math.min(25,Math.max(2,gFromUI(v))); $('f-gapR').value=cfg.gap; update(false);}});
+$('f-gap').addEventListener('input',()=>{const v=parseFloat(String($('f-gap').value).replace(',','.')); if(isFinite(v)){cfg.gap=Math.min(50,Math.max(2,gFromUI(v))); $('f-gapR').value=cfg.gap; update(false);}});
 $('f-gap').addEventListener('blur',fillNums);
 
 function rebuildSegs(){

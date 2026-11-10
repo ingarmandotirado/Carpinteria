@@ -43,7 +43,7 @@ Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro super
 `comoda/index.html` calcula el despiece de la cómoda del muro B para el carpintero:
 
 - Altura total = altura de la moldura medida en obra − aire (base: 97 − 2 = 95 cm).
-- Frentes por fuera o al ras del marco, con separación entre frentes de 2 a 25 mm (con tiras de marco al ras cuando caben).
+- Frentes por fuera o al ras del marco, con separación entre frentes de 2 a 50 mm (con tiras de marco al ras cuando caben).
 - Filas, cajones por fila (igual o distinto en cada fila), altos y anchos de frentes, rieles, cierre y jaladera.
 - Mueble hasta el piso: zócalo al ras, metido o frente inferior hasta el piso; recorte abajo atrás para librar el zoclo.
 - Botón mm / pulgadas (fracciones de 1/16").

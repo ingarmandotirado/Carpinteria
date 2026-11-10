@@ -416,7 +416,7 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
       <div class="gbody">
         <div>
           <div class="seglbl">Separación entre frentes (<span class="ug">mm</span>)</div>
-          <div class="grid"><input id="f-gapR" type="range" min="2" max="10" step="0.5" aria-label="Separación entre frentes" style="grid-column:span 2"><input id="f-gap" type="number" inputmode="decimal" step="0.5" aria-label="Separación, valor"></div>
+          <div class="grid"><input id="f-gapR" type="range" min="2" max="50" step="0.5" aria-label="Separación entre frentes" style="grid-column:span 2"><input id="f-gap" type="number" inputmode="decimal" step="0.5" aria-label="Separación, valor"></div>
         </div>
         <div class="grid">
           <label class="f">Rieles y bisagras<select id="f-slide"><option value="suave">Cierre suave</option><option value="normal">Normal</option><option value="push">Empujar para abrir</option></select></label>
@@ -875,7 +875,7 @@ SEL.forEach(k=>{const el=$('f-'+k); el.value=String(cfg[k]); el.addEventListener
   if(k==='species'&&cfg.matKind==='maciza'){cfg.woodHex=SPECIES[cfg.species].hex; cfg.woodXY=null;} update();});});
 $('f-veta').checked=cfg.veta; $('f-veta').onchange=()=>{cfg.veta=$('f-veta').checked; update();};
 $('f-gapR').addEventListener('input',()=>{cfg.gap=+$('f-gapR').value; $('f-gap').value=IN()?r1(cfg.gap/25.4*100)/100:cfg.gap; update(false);});
-$('f-gap').addEventListener('change',()=>{const v=parseFloat($('f-gap').value); if(isFinite(v)){cfg.gap=Math.min(10,Math.max(2,IN()?v*25.4:v)); update();}});
+$('f-gap').addEventListener('change',()=>{const v=parseFloat($('f-gap').value); if(isFinite(v)){cfg.gap=Math.min(50,Math.max(2,IN()?v*25.4:v)); update();}});
 function commonSegs(){
   seg('s-units',[['mm','mm'],['in','Pulgadas']],()=>cfg.units,v=>{cfg.units=v; renderMenus();});
   seg('s-matKind',[['tablero','Tablero (MDF, triplay, melamina)'],['maciza','Madera maciza']],()=>cfg.matKind,v=>{cfg.matKind=v; if(v==='maciza'){cfg.fin='natural'; $('f-fin').value='natural'; cfg.woodHex=SPECIES[cfg.species].hex; cfg.woodXY=null;}});

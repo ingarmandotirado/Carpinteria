@@ -99,7 +99,7 @@ button.b.sm{padding:5px 10px;font-size:13px}
 button.b:disabled{opacity:.5;cursor:default}
 button:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,.card:focus-visible,a:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .col{display:flex;flex-direction:column;gap:16px;min-width:0}
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
 @media (max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kpi{background:var(--sheet);padding:11px 13px;min-width:0}
 .kpi b{display:block;font:500 20px var(--f-mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -317,8 +317,6 @@ textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--
     <div class="kpis" aria-live="polite">
       <div class="kpi"><span>Medida total</span><b id="k-dim">—</b></div>
       <div class="kpi"><span>Piezas</span><b id="k-pz">—</b></div>
-      <div class="kpi money"><span>Independiente</span><b id="k-ind">—</b></div>
-      <div class="kpi money"><span>Taller</span><b id="k-tal">—</b></div>
     </div>
     <div class="msgs" id="msgs"></div>
 
@@ -849,7 +847,6 @@ function renderAll(R){
   const t=TYPES[cfg.type];
   $('typeTitle').textContent=t.name; $('tips').innerHTML=t.tips.map(s=>`<li>${s}</li>`).join('');
   $('k-dim').textContent=`${LK(R.W)} × ${LK(R.H)}`; $('k-pz').textContent=R.rows.reduce((a,r)=>a+r.q,0);
-  $('k-ind').textContent=money(R.cost.ind.tot); $('k-tal').textContent=money(R.cost.tal.tot);
   const msgs=[...R.msgs]; const seen=new Set();
   $('msgs').innerHTML=msgs.filter(m=>!seen.has(m[1])&&seen.add(m[1])).map(([k,s])=>`<div class="msg ${k}">${s}</div>`).join('');
   $('sum-type').textContent=`${LK(R.W)} × ${LK(R.D)} × ${LK(R.H)}`;
@@ -928,7 +925,7 @@ function renderPrices(){
   $('priceBody').querySelectorAll('input[data-pc]').forEach(el=>el.onchange=()=>{const ks=el.dataset.pc.split('.'); PR[ks[0]][ks[1]]=el.checked; savePR(); refreshCost();});
   $('pricesReset').onclick=()=>{PR=clone(PRICE_DEF); savePR(); renderPrices(); refreshCost();};
 }
-function refreshCost(){ if(!current) return; current.cost=costOf(current); renderCost(current); $('k-ind').textContent=money(current.cost.ind.tot); $('k-tal').textContent=money(current.cost.tal.tot); }
+function refreshCost(){ if(!current) return; current.cost=costOf(current); renderCost(current); }
 
 // ====================== Planos (proyección de las piezas) ======================
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();

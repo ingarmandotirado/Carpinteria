@@ -5,6 +5,7 @@
 
 - Modelo del cuarto: https://ingarmandotirado.github.io/Carpinteria/
 - Despiece para el carpintero: https://ingarmandotirado.github.io/Carpinteria/comoda/
+- Muebles a medida (buró, mueble de TV, librero, escritorio): https://ingarmandotirado.github.io/Carpinteria/muebles/
 
 El nombre del repositorio lleva **C mayúscula**: GitHub Pages distingue mayúsculas, con `carpinteria` en minúscula da 404.
 
@@ -54,3 +55,14 @@ Colores: lambrín, molduras y cenefa blanco perla satinado `#F3EFE7`; muro super
 ### Configuraciones públicas
 
 `comoda/configs.json` es la lista pública que ve cualquiera en “Guardar / abrir”. Cada entrada lleva `nombre`, `fecha` y `config` (solo los valores que cambian respecto a la base). Para agregar una, copia su enlace con el botón “Enlace” y pásalo para sumarlo a la lista.
+
+## Muebles a medida
+
+`muebles/index.html` empieza preguntando qué mueble vas a hacer y abre sus menús propios.
+
+- **Fase 1:** buró (independiente de la cama), mueble de TV, librero y escritorio. Próximamente: cama, mesa de comedor, mesa de centro, silla y banco, clóset.
+- **Material:** tablero (MDF, triplay, melamina) o madera maciza (pino, cedro, parota, encino) con despiece por pies tabla.
+- **Revisiones por tipo:** altura respecto al colchón (buró), largo y altura según la pantalla (TV), claro máximo de repisas para que no se pandeen (librero) y espacio libre para piernas (escritorio).
+- **Costo aproximado y precio sugerido** para Sinaloa en dos categorías: carpintero independiente y taller profesional. Material, herrajes, acabado, horas, merma, gastos, utilidad e IVA; todos los precios son editables.
+- Armado 3D con cajones y puertas que abren, explosión con claves, alzado y corte, mm o pulgadas, tono de madera, guardar con nombre, enlaces y PDF (con o sin costos).
+- `muebles/configs.json` es la lista pública de ejemplos.

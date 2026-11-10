@@ -1,0 +1,7 @@
+[
+  {"nombre":"Buró de parota, 2 cajones con patas","config":{"type":"buro","matKind":"maciza","species":"parota","tM":19,"fin":"natural","finTop":"igual","woodHex":"#9A6A45","veta":true}},
+  {"nombre":"Buró blanco perla con nicho","config":{"type":"buro","matKind":"tablero","tablero":"MDF","tT":18,"fin":"pintado","colF":"#F3EFE7","p":{"W":45,"D":38,"H":58,"base":"patas","baseH":15,"zones":[{"t":"cajon","h":15,"k":0},{"t":"nicho","h":0,"k":0}],"pasa":true}}},
+  {"nombre":"Mueble de TV 180 cm para pantalla de 55\"","config":{"type":"tv","matKind":"tablero","tablero":"MDF","tT":18,"fin":"pintado","finTop":"natural","woodHex":"#CDA77E"}},
+  {"nombre":"Librero 2 columnas con puertas abajo","config":{"type":"librero","matKind":"tablero","tablero":"MDF","tT":18,"fin":"pintado"}},
+  {"nombre":"Escritorio 120 cm con cajonera, pino","config":{"type":"escritorio","matKind":"maciza","species":"pino","tM":19,"fin":"natural","woodHex":"#E0BC8C"}}
+]

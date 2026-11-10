@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+<title>Muebles a medida · taller</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: primero el catálogo de muebles; al elegir uno, mesa de taller con visor fijo a la izquierda y menús, despiece y costos a la derecha. */
+:root{
+  --paper:#EEF1F1; --sheet:#FAFBFB; --ink:#1D2A2E; --muted:#5E6E72; --line:rgba(29,42,46,.14);
+  --accent:#1F6F78; --accent-ink:#FFFFFF; --warn:#B4541A; --bad:#B3261E; --ok:#2E7D4F;
+  --dim:#B4541A; --chip:#FFFFFF; --money:#2E5E3A;
+  --f-display:"Barlow Condensed","Arial Narrow",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Barlow",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#151B1D; --sheet:#1D2528; --ink:#E4ECEC; --muted:#93A4A8; --line:rgba(228,236,236,.14);
+    --accent:#5FB3BC; --accent-ink:#0F1A1C; --warn:#E39A62; --bad:#F08A80; --ok:#7CC79A; --dim:#E39A62; --chip:#243034; --money:#8FD1A0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#151B1D; --sheet:#1D2528; --ink:#E4ECEC; --muted:#93A4A8; --line:rgba(228,236,236,.14);
+  --accent:#5FB3BC; --accent-ink:#0F1A1C; --warn:#E39A62; --bad:#F08A80; --ok:#7CC79A; --dim:#E39A62; --chip:#243034; --money:#8FD1A0;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;max-width:1320px;margin:0 auto;
+  padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}}
+header.top{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,5vw,36px);letter-spacing:.01em;margin:0;text-wrap:balance;line-height:1.05}
+.sub{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.hdr-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* catálogo */
+.catalog{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;color:var(--ink);font:inherit}
+.card:hover{border-color:var(--accent)}
+.card svg{width:64px;height:48px}
+.card b{font:700 20px var(--f-display);letter-spacing:.02em;text-transform:uppercase}
+.card span{font-size:13px;color:var(--muted)}
+.card[disabled]{cursor:default;opacity:.55}
+.card .tag{align-self:flex-start;font:600 11px var(--f-display);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+.catalog h2{grid-column:1/-1;font:700 15px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 -4px}
+/* visor */
+.viewer{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);align-self:start;background:var(--sheet);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+@media (max-width:900px){.viewer{position:relative;top:0}}
+.tabs{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{font:600 14px var(--f-display);letter-spacing:.04em;text-transform:uppercase;background:transparent;color:var(--muted);border:0;border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.stage{position:relative;height:min(60vh,580px);min-height:330px}
+@media (max-width:900px){.stage{height:50vh}}
+.stage>div{position:absolute;inset:0}
+#v3d{touch-action:none}
+#v3d canvas{display:block}
+.svgbox{overflow:auto;padding:10px}
+.svgbox svg{display:block;width:100%;height:100%;font-family:var(--f-mono)}
+.vbar{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:8px 10px;border-top:1px solid var(--line)}
+.vbar .note{font-size:12.5px;color:var(--muted);margin-left:auto}
+.vbar label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.vbar input[type=range]{width:120px;padding:0}
+.pinfo{flex-basis:100%;font-size:13px;min-height:1.4em}
+.pinfo b{font-family:var(--f-mono);font-weight:500}
+button.b{font:600 14px var(--f-body);color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;white-space:nowrap}
+button.b.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.b.sm{padding:4px 10px;font-size:13px}
+button.b:disabled{opacity:.5;cursor:default}
+button:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:9px 11px;min-width:0}
+.kpi b{display:block;font:600 20px var(--f-mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi span{font:600 11.5px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.kpi.money b{color:var(--money)}
+details.g{background:var(--sheet);border:1px solid var(--line);border-radius:12px}
+details.g>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:baseline;gap:10px}
+details.g>summary::-webkit-details-marker{display:none}
+details.g>summary h2{font:700 18px var(--f-display);letter-spacing:.03em;text-transform:uppercase;margin:0}
+details.g>summary small{color:var(--muted);font-size:13px;margin-left:auto;text-align:right}
+details.g>summary::after{content:"+";font:600 18px var(--f-mono);color:var(--muted)}
+details.g[open]>summary::after{content:"–"}
+.gbody{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+@media (max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
+label.f.wide{grid-column:1/-1}
+input,select{font:500 16px var(--f-mono);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:8px 9px;width:100%;min-width:0;font-variant-numeric:tabular-nums}
+select{font-family:var(--f-body)}
+input[type=range]{accent-color:var(--accent);border:0;background:transparent}
+label.chk{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:14px}
+label.chk input{width:auto}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:600 14px var(--f-body);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.seglbl{font:600 12px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.help{font-size:13px;color:var(--muted);margin:0}
+.tips{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.msgs{display:flex;flex-direction:column;gap:6px}
+.msg{font-size:13.5px;padding:8px 11px;border-radius:9px;border:1px solid var(--line);background:var(--sheet)}
+.msg.warn{border-color:color-mix(in srgb,var(--warn) 45%,transparent);color:var(--warn)}
+.msg.bad{border-color:color-mix(in srgb,var(--bad) 45%,transparent);color:var(--bad);font-weight:600}
+.msg.ok{border-color:color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok)}
+.zones{display:flex;flex-direction:column;gap:8px}
+.zone{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.8fr) auto;gap:8px;align-items:end;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+@media (max-width:520px){.zone{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.zone .zt{font:600 12px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);grid-column:1/-1;margin-bottom:-4px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+table.small{min-width:0}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--sheet);position:sticky;top:0}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.r,th.r{text-align:right}
+tr.grp td{font:700 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase;background:var(--sheet);color:var(--accent)}
+tr.pick td{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+tr.tot td{font-weight:600;border-top:2px solid var(--line)}
+.id{font:500 12px var(--f-mono);color:var(--muted)}
+ul.notes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+textarea{width:100%;font:13px var(--f-mono);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px}
+.prices{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 10px}
+.pgroup{display:flex;flex-direction:column;gap:6px}
+.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.quotes{grid-template-columns:minmax(0,1fr)}}
+.quote{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper);display:flex;flex-direction:column;gap:6px;min-width:0}
+.quote h3{margin:0;font:700 16px var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.quote .big{font:600 26px var(--f-mono);color:var(--money);letter-spacing:-.02em}
+.quote .rng{font:500 13px var(--f-mono);color:var(--muted)}
+.quote table{min-width:0;font-size:13px}
+.quote td{padding:4px 2px;border-bottom:1px dashed var(--line)}
+.saves{background:var(--sheet);border:1px solid var(--accent);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.savehead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.savehead h2{font:700 18px var(--f-display);letter-spacing:.03em;text-transform:uppercase;margin:0}
+.saverow{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.saverow .grow{flex:1 1 220px}
+.saverow input{font-family:var(--f-body)}
+.savelist ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.savelist li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.savelist li .nm{font-weight:600;flex:1 1 160px;min-width:0;overflow-wrap:anywhere}
+.savelist li .dt{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.savelist li button.b{padding:5px 11px;font-size:13px}
+.savelist .empty{color:var(--muted);font-size:13px;border-style:dashed}
+.woodpick{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.wphead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.wphead .seglbl{margin:0}
+.wpcur{display:flex;align-items:center;gap:8px;font-size:14px}
+.wpcur code{font:500 12.5px var(--f-mono);color:var(--muted)}
+.wpsw{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);display:inline-block}
+.wpchips{display:flex;flex-wrap:wrap;gap:6px}
+.wpchip{display:flex;align-items:center;gap:6px;font:500 13px var(--f-body);color:var(--ink);background:var(--sheet);border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 4px;cursor:pointer}
+.wpchip i{width:20px;height:20px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.wpchip[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.wpmap{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+.wpmap canvas{width:100%;height:auto;aspect-ratio:360/150;border-radius:8px;border:1px solid var(--line);cursor:crosshair;touch-action:none;display:block}
+.wpmap .ax{font:600 11px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.ax-x{display:flex;justify-content:space-between;font:600 11px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.wpdot{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.6);pointer-events:none}
+.foot{grid-column:1/-1;color:var(--muted);font-size:12.5px}
+.foot a,.help a{color:var(--accent)}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 id="title">Muebles a medida</h1>
+      <p class="sub" id="subtitle">Elige el mueble. Se abren sus medidas y criterios propios, el despiece para el carpintero y un costo aproximado con precio sugerido para Sinaloa.</p>
+    </div>
+    <div class="hdr-actions" id="hdrActions" hidden>
+      <button class="b" id="changeType">Cambiar mueble</button>
+      <div class="seg" id="s-units" role="group" aria-label="Unidades"></div>
+      <button class="b" id="savesBtn" aria-expanded="false" aria-controls="saves">Guardar / abrir</button>
+      <button class="b primary" id="pdfBtn">Generar PDF</button>
+    </div>
+  </header>
+
+  <section class="catalog" id="catalog" aria-label="Elige el mueble"></section>
+
+  <section class="viewer" id="viewer" aria-label="Vista del mueble" hidden>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="armado">Armado 3D</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="explosion">Explosión</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="vfront">Alzado</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="vside">Corte</button>
+    </div>
+    <div class="stage">
+      <div id="v3d"></div>
+      <div id="vfront" class="svgbox" hidden></div>
+      <div id="vside" class="svgbox" hidden></div>
+    </div>
+    <div class="vbar" id="bar-armado">
+      <button class="b" id="openAll">Abrir todo</button>
+      <button class="b" id="viewFront">De frente</button>
+      <button class="b" id="viewIso">3/4</button>
+      <span class="note">Toca un cajón o una puerta para abrirla.</span>
+    </div>
+    <div class="vbar" id="bar-ex" hidden>
+      <label for="exf">Separación <input id="exf" type="range" min="0" max="100" value="70"></label>
+      <label class="chk"><input id="exLabels" type="checkbox" checked> Etiquetas</label>
+      <button class="b" id="exFit">Centrar</button>
+      <span class="pinfo" id="pinfo">Toca una pieza para ver su clave y medidas.</span>
+    </div>
+    <div class="vbar" id="bar-svg" hidden><span class="note" id="svgnote">Cotas en mm.</span></div>
+  </section>
+
+  <div class="col" id="tool" hidden>
+    <section class="saves" id="saves" hidden aria-label="Configuraciones guardadas">
+      <div class="savehead"><h2>Configuraciones</h2><span class="help" id="curName"></span></div>
+      <div class="saverow">
+        <label class="f grow">Nombre de esta configuración<input id="saveName" type="text" maxlength="60" placeholder="Ej. Buró 2 cajones parota" autocomplete="off"></label>
+        <button class="b primary" id="saveDo">Guardar</button>
+      </div>
+      <p class="help" id="saveMsg" aria-live="polite"></p>
+      <div class="savelist"><div class="seglbl">Guardadas en este dispositivo</div><ul id="localList"></ul></div>
+      <div class="savelist" id="pubWrap" hidden><div class="seglbl">Públicas (en el repositorio)</div><ul id="pubList"></ul></div>
+      <textarea id="linkBox" rows="3" hidden aria-label="Enlace de la configuración"></textarea>
+      <p class="help">“Enlace” copia una dirección pública con todo el mueble: quien la abra ve lo mismo y puede guardarlo con su nombre. Para que uno quede en la lista pública, manda su enlace.</p>
+    </section>
+
+    <div class="kpis" aria-live="polite">
+      <div class="kpi"><span>Medida total</span><b id="k-dim">—</b></div>
+      <div class="kpi"><span>Piezas</span><b id="k-pz">—</b></div>
+      <div class="kpi money"><span>Independiente</span><b id="k-ind">—</b></div>
+      <div class="kpi money"><span>Taller</span><b id="k-tal">—</b></div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+
+    <details class="g" open>
+      <summary><h2 id="typeTitle">Medidas y criterios</h2><small id="sum-type"></small></summary>
+      <div class="gbody">
+        <ul class="tips" id="tips"></ul>
+        <div id="typeMenus"></div>
+      </div>
+    </details>
+
+    <details class="g">
+      <summary><h2>Material y acabado</h2><small id="sum-mat"></small></summary>
+      <div class="gbody">
+        <div><div class="seglbl">Material principal</div><div class="seg" id="s-matKind"></div></div>
+        <div class="grid" id="g-tablero">
+          <label class="f">Tablero<select id="f-tablero"><option value="MDF">MDF</option><option value="Triplay">Triplay de pino</option><option value="Melamina">Melamina</option></select></label>
+          <label class="f">Grueso<select id="f-tT"><option value="15">15 mm</option><option value="16">16 mm</option><option value="18">18 mm</option><option value="19">19 mm</option></select></label>
+        </div>
+        <div class="grid" id="g-maciza">
+          <label class="f">Madera<select id="f-species"><option value="pino">Pino</option><option value="cedro">Cedro</option><option value="parota">Parota</option><option value="encino">Encino</option></select></label>
+          <label class="f">Grueso terminado<select id="f-tM"><option value="19">19 mm (3/4", de tabla de 1")</option><option value="25">25 mm (1", de tablón de 1 1/2")</option><option value="32">32 mm (1 1/4", de tablón de 1 1/2")</option></select></label>
+          <p class="help wide" style="grid-column:1/-1">En madera maciza, las piezas de más de 20 cm de ancho se hacen pegando tablas por el canto. Respaldo y pisos de cajón van en triplay de 6 mm.</p>
+        </div>
+        <div class="grid">
+          <label class="f">Cajas de cajón<select id="f-boxMat"><option value="triplay">Triplay 15 mm</option><option value="maciza">Pino maciza 16 mm</option></select></label>
+          <label class="f">Acabado<select id="f-fin"><option value="pintado">Pintado (laca)</option><option value="natural">Madera natural (barniz)</option></select></label>
+          <label class="f">Cubierta<select id="f-finTop"><option value="igual">Igual al mueble</option><option value="natural">Madera natural</option><option value="pintado">Pintada</option></select></label>
+          <label class="f">Color de pintura<select id="f-colF"><option value="#F3EFE7">Blanco perla</option><option value="#F7F7F5">Blanco puro</option><option value="#BFC4C8">Gris</option><option value="#B5C2AA">Salvia</option><option value="#D8C6A5">Beige</option><option value="#2E2C2B">Carbón</option></select></label>
+          <label class="f chk"><input id="f-veta" type="checkbox"> Mostrar la veta</label>
+        </div>
+        <div class="woodpick" id="woodpick">
+          <div class="wphead"><div class="seglbl">Tono de la madera</div><span class="wpcur"><span class="wpsw" id="wpSw"></span><b id="wpName">Pino</b><code id="wpHex">#E0BC8C</code></span></div>
+          <div class="wpchips" id="wpWoods" role="group" aria-label="Maderas comunes"></div>
+          <div class="wpmap">
+            <span class="ax">Gris / ceniza</span>
+            <canvas id="wpMap" width="360" height="150" aria-label="Mapa de tonos de madera" tabindex="0"></canvas>
+            <span class="ax">Rojizo</span>
+            <div class="ax-x"><span>Claro</span><span>Natural</span><span>Oscuro</span></div>
+            <span class="wpdot" id="wpDot" hidden></span>
+          </div>
+          <div class="seglbl">Tonos lisos y deslavados</div>
+          <div class="wpchips" id="wpNeutrals" role="group" aria-label="Blancos y grises"></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="g">
+      <summary><h2>Cajones, puertas y herrajes</h2><small id="sum-hw"></small></summary>
+      <div class="gbody">
+        <div>
+          <div class="seglbl">Separación entre frentes (<span class="ug">mm</span>)</div>
+          <div class="grid"><input id="f-gapR" type="range" min="2" max="10" step="0.5" aria-label="Separación entre frentes" style="grid-column:span 2"><input id="f-gap" type="number" inputmode="decimal" step="0.5" aria-label="Separación, valor"></div>
+        </div>
+        <div class="grid">
+          <label class="f">Rieles y bisagras<select id="f-slide"><option value="suave">Cierre suave</option><option value="normal">Normal</option><option value="push">Empujar para abrir</option></select></label>
+          <label class="f">Jaladera<select id="f-pull"><option value="boton">Botón</option><option value="barra">Barra</option><option value="ninguna">Ninguna</option></select></label>
+        </div>
+      </div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Costo y precio sugerido</h2><small id="sum-cost"></small></summary>
+      <div class="gbody">
+        <div class="quotes" id="quotes"></div>
+        <div class="tablewrap"><table class="small" id="costTable"><thead><tr><th>Concepto</th><th>Detalle</th><th class="r">Costo</th></tr></thead><tbody></tbody></table></div>
+        <p class="help" id="costHelp"></p>
+      </div>
+    </details>
+
+    <details class="g">
+      <summary><h2>Precios de referencia</h2><small>editables, en pesos</small></summary>
+      <div class="gbody" id="priceBody"></div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Despiece</h2><small id="sum-desp"></small></summary>
+      <div class="gbody">
+        <div class="tablewrap"><table id="cut"><thead></thead><tbody></tbody></table></div>
+        <p class="help" id="sheets"></p>
+        <div class="actions">
+          <button class="b primary" id="copy">Copiar despiece</button>
+          <label class="f chk"><input id="pdfCost" type="checkbox"> Incluir costos en el PDF</label>
+          <button class="b" id="reset">Restablecer este mueble</button>
+        </div>
+        <textarea id="copyBox" rows="6" hidden aria-label="Despiece en texto"></textarea>
+        <p class="help" id="pdfMsg" hidden></p>
+      </div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Herrajes</h2></summary>
+      <div class="gbody"><div class="tablewrap"><table id="hw"><thead><tr><th>Herraje</th><th>Cant.</th><th>Qué pedir</th></tr></thead><tbody></tbody></table></div></div>
+    </details>
+
+    <details class="g" open>
+      <summary><h2>Notas para el carpintero</h2></summary>
+      <div class="gbody"><ul class="notes" id="notes"></ul></div>
+    </details>
+  </div>
+  <p class="foot">Medidas y precios aproximados: verifica en obra y cotiza material con tu maderería antes de cortar. <a href="../comoda/">Ver la cómoda del cuarto del bebé</a> · <a href="../">Ver el modelo del cuarto</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const mm=v=>Math.round(v), fl5=v=>Math.floor(v/5)*5, r1=v=>Math.round(v*10)/10;
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+// ====================== Catálogo de muebles y lo que cuida cada uno ======================
+const ICON={
+  buro:'<svg viewBox="0 0 64 48"><rect x="16" y="6" width="32" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="16" y1="21" x2="48" y2="21" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="13.5" r="1.8" fill="currentColor"/><circle cx="32" cy="28.5" r="1.8" fill="currentColor"/><line x1="19" y1="36" x2="19" y2="44" stroke="currentColor" stroke-width="2.5"/><line x1="45" y1="36" x2="45" y2="44" stroke="currentColor" stroke-width="2.5"/></svg>',
+  tv:'<svg viewBox="0 0 64 48"><rect x="14" y="3" width="36" height="20" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="27" width="56" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="23" y1="27" x2="23" y2="42" stroke="currentColor" stroke-width="2"/><line x1="41" y1="27" x2="41" y2="42" stroke="currentColor" stroke-width="2"/><line x1="7" y1="42" x2="7" y2="46" stroke="currentColor" stroke-width="2.5"/><line x1="57" y1="42" x2="57" y2="46" stroke="currentColor" stroke-width="2.5"/></svg>',
+  librero:'<svg viewBox="0 0 64 48"><rect x="16" y="2" width="32" height="44" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="32" y1="2" x2="32" y2="46" stroke="currentColor" stroke-width="2"/><line x1="16" y1="12" x2="48" y2="12" stroke="currentColor" stroke-width="1.8"/><line x1="16" y1="22" x2="48" y2="22" stroke="currentColor" stroke-width="1.8"/><line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="2.2"/></svg>',
+  escritorio:'<svg viewBox="0 0 64 48"><rect x="4" y="14" width="56" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="42" y="18" width="16" height="26" fill="none" stroke="currentColor" stroke-width="2.2"/><line x1="42" y1="27" x2="58" y2="27" stroke="currentColor" stroke-width="1.8"/><line x1="42" y1="35" x2="58" y2="35" stroke="currentColor" stroke-width="1.8"/><line x1="7" y1="18" x2="7" y2="44" stroke="currentColor" stroke-width="2.5"/></svg>',
+  comoda:'<svg viewBox="0 0 64 48"><rect x="8" y="6" width="48" height="36" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="32" y1="6" x2="32" y2="42" stroke="currentColor" stroke-width="1.8"/><line x1="8" y1="18" x2="56" y2="18" stroke="currentColor" stroke-width="1.8"/><line x1="8" y1="30" x2="56" y2="30" stroke="currentColor" stroke-width="1.8"/></svg>',
+  otro:'<svg viewBox="0 0 64 48"><rect x="10" y="10" width="44" height="28" rx="4" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/></svg>'
+};
+const TYPES={
+  buro:{name:'Buró',desc:'Mesa de noche independiente: cajones, nicho o puerta; con patas, zócalo o flotado.',
+    tips:['Altura típica de 55 a 65 cm. Si va junto a una cama, la cubierta queda a la altura del colchón, ±5 cm.','Ancho de 40 a 60 cm y fondo de 35 a 45 cm.','Un pasacables atrás deja pasar el cargador del celular o la lámpara.','Con patas se limpia mejor debajo; flotado libera el piso pero necesita muro firme.'],
+    def:{W:50,D:40,H:60,base:'patas',baseH:15,elev:45,vf:1,vl:1,colchon:0,pasa:true,zones:[{t:'cajon',h:0,k:0},{t:'cajon',h:0,k:0}]}},
+  tv:{name:'Mueble de TV',desc:'Largo según la pantalla, módulos de puertas, cajones o nichos con ventilación.',
+    tips:['Largo de 1.2 a 1.5 veces el ancho de la pantalla.','El centro de la pantalla debe quedar a la altura de los ojos sentado (100 a 110 cm).','Los nichos de aparatos necesitan ventilación atrás y pasacables.','Si es flotado y la TV va encima, debe colgarse de muro firme con herraje de carga.'],
+    def:{W:180,D:45,H:50,base:'patas',baseH:12,elev:30,vf:1,vl:1,tvIn:55,pasa:true,mods:[{t:'puertas',k:1,n:1},{t:'nicho',k:1,n:1,vent:true},{t:'cajones',k:0,n:2}]}},
+  librero:{name:'Librero',desc:'Columnas con repisas fijas o ajustables y, si quieres, puertas o cajones abajo.',
+    tips:['No más de 80 cm entre apoyos con tablero de 18 mm y libros, o la repisa se pandea.','Fondo de 30 a 35 cm y alto de 180 a 220 cm.','Siempre fijarlo al muro.','Las repisas ajustables llevan perforaciones cada 32 mm para los soportes.'],
+    def:{W:100,D:32,H:200,base:'zocalo',baseH:8,cols:2,shelves:4,adj:true,low:true,lowH:80,lowType:'puertas'}},
+  escritorio:{name:'Escritorio',desc:'Cubierta con cajonera, paneles o patas; espacio libre para piernas y pasacables.',
+    tips:['Altura de 73 a 76 cm y fondo de 60 a 75 cm.','Deja al menos 60 cm de ancho y 63 cm de alto libres para las piernas.','Pasacables en la cubierta para cargadores y monitor.','Un panel trasero (de modestia) le da rigidez y tapa los cables.'],
+    def:{W:120,D:60,H:75,sup:'cajonera',side:'der',cajW:40,cajN:3,modesty:true,pasa:2,vf:0}}
+};
+const SOON=[['Cama','Base para colchón, cabecera, piecera y cajones bajo la cama.'],['Mesa de comedor','Por número de personas: forma, patas, faldón y extensión.'],['Mesa de centro y lateral','Altura del sofá, entrepaño o cajón.'],['Silla y banco','Asiento, respaldo, travesaños y uniones de caja y espiga.'],['Clóset','Módulos de colgar, maletero, cajones y repisas.']];
+
+// ====================== Configuración ======================
+const SPECIES={pino:{n:'Pino',hex:'#E0BC8C'},cedro:{n:'Cedro',hex:'#B4704A'},parota:{n:'Parota',hex:'#9A6A45'},encino:{n:'Encino',hex:'#C9A57A'}};
+const DEF={type:null,units:'mm',matKind:'tablero',tablero:'MDF',tT:18,species:'pino',tM:19,boxMat:'triplay',fin:'pintado',finTop:'igual',colF:'#F3EFE7',woodHex:'#E0BC8C',woodXY:null,veta:true,gap:3,slide:'suave',pull:'boton',p:{}};
+Object.keys(TYPES).forEach(k=>DEF.p[k]=clone(TYPES[k].def));
+const KEY='muebles.config.v1';
+let cfg;
+try{cfg=Object.assign(clone(DEF),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){cfg=clone(DEF);}
+Object.keys(TYPES).forEach(k=>{cfg.p[k]=Object.assign(clone(TYPES[k].def),(cfg.p||{})[k]||{});});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
+const P=()=>cfg.p[cfg.type];
+
+// ====================== Unidades ======================
+const IN=()=>cfg.units==='in';
+function frac(inches){ const neg=inches<0; let s=Math.round(Math.abs(inches)*16), w=Math.floor(s/16), f=s%16, d=16; while(f&&f%2===0){f/=2; d/=2;} return (neg?'-':'')+(w||!f?w:'')+(f?(w?' ':'')+f+'/'+d:''); }
+const L=v=>IN()?frac(v/25.4):String(mm(v));
+const LU=v=>IN()?frac(v/25.4)+'"':mm(v)+' mm';
+const LK=v=>IN()?frac(v/25.4)+'"':(Math.round(v)/10).toFixed(1)+' cm';
+const UL=()=>IN()?'pulg':'mm';
+const toUI=cm=>IN()?Math.round(cm/2.54*1000)/1000:cm, fromUI=v=>IN()?v*2.54:v;
+const money=v=>'$'+Math.round(v).toLocaleString('es-MX');
+const round50=v=>Math.round(v/50)*50;
+
+// ====================== Precios de referencia (MXN, editables) ======================
+const PRICE_DEF={
+  'MDF':{3:190,6:320,9:430,12:560,15:700,16:730,18:800,19:850},
+  'Triplay':{3:230,6:380,9:520,12:650,15:820,16:840,18:950,19:990},
+  'Melamina':{15:900,16:950,18:1050,19:1100},
+  maciza:{pino:40,cedro:110,parota:115,encino:135},
+  canto:8,
+  hw:{rielSuave:180,rielNormal:90,rielPush:230,bisagraSuave:45,bisagraNormal:20,compas:120,boton:35,barra:70,nivelador:25,correa:60,pin:2,pasacables:35,colgador:150,escuadra:6,tornilleria:150},
+  fin:{pintado:150,natural:100},
+  ind:{hora:250,merma:10,util:20,iva:false},
+  tal:{hora:420,merma:15,indirectos:18,util:35,iva:true}
+};
+const PKEY='muebles.precios.v1';
+let PR; try{PR=Object.assign(clone(PRICE_DEF),JSON.parse(localStorage.getItem(PKEY)||'{}'));}catch(e){PR=clone(PRICE_DEF);}
+['MDF','Triplay','Melamina','maciza','hw','fin','ind','tal'].forEach(k=>PR[k]=Object.assign(clone(PRICE_DEF[k]),PR[k]||{}));
+const savePR=()=>{try{localStorage.setItem(PKEY,JSON.stringify(PR));}catch(e){}};
+
+// ====================== Motor de mueble de caja ======================
+// Coordenadas en mm: x a lo ancho, y hacia arriba, z hacia el frente (el muro en z=0).
+const SLIDES=[250,300,350,400,450,500,550];
+function caseBuild(S,out){
+  const {T,tb,ts,tfo,g}=S, W=S.W, H=S.H, D=S.D, x0=S.x0||0, e=Math.min(g/2,3), Di=D-tb;
+  const B=(x,y,z,w,h,d)=>({x:x+x0,y,z,w,h,d});
+  const add=o=>out.pieces.push(Object.assign({canto:'',note:'',role:'in',mat:'main',veta:null},o));
+  const base=S.base.kind, bh=S.base.h||0, zoc=base==='zocalo', pat=base==='patas';
+  const yb=zoc?0:pat?bh:(S.base.elev||0);
+  const pisoY=zoc?bh:yb;
+  const top=S.top.kind, tc=S.top.tc||T, Htop=top==='sobre'?H-tc:H;
+  const y0=pisoY+T, y1=top==='entre'?H-T:Htop-T;
+  const cx=W/2;
+  const lbl=S.label?` (${S.label})`:'';
+  // laterales
+  [0,1].forEach(s=>add({grp:'Cuerpo',name:'Lateral'+lbl,a:Htop-yb,b:Di,e:T,canto:'canto al frente',role:'side',grain:'y',veta:Htop-yb,
+    note:zoc?'Llega al piso.':pat?`Va sobre las patas, a ${LU(yb)} del suelo.`:`Mueble flotado: su parte de abajo queda a ${LU(yb)} del suelo.`,
+    boxes:[B(s?W-T:0,yb,tb,T,Htop-yb,Di)],ex:[s?300:-300,0,0]}));
+  add({grp:'Cuerpo',name:'Piso del mueble'+lbl,a:W-2*T,b:Di,e:T,canto:'canto al frente',role:'side',grain:'x',note:`Va entre los laterales; su cara de arriba a ${LU(pisoY+T)} del suelo.`,boxes:[B(T,pisoY,tb,W-2*T,T,Di)],ex:[0,-160,0]});
+  if(top==='sobre'){
+    [D-100,tb].forEach((z,i)=>add({grp:'Cuerpo',name:'Tira de amarre arriba'+lbl,a:W-2*T,b:100,e:T,canto:'canto al frente (la de adelante)',role:i?'in':'side',grain:'x',note:'Una adelante y otra atrás; aquí se atornilla la cubierta.',boxes:[B(T,Htop-T,z,W-2*T,T,100)],ex:[0,190,i?-120:120]}));
+    if(S.top.cover!==false){ const cw=W+2*S.top.vl, cd=D+T+S.top.vf;
+      add({grp:'Cubierta',name:'Cubierta'+lbl,a:cw,b:cd,e:tc,canto:'frente y 2 lados',role:'top',grain:'x',veta:cw,note:`Sobresale ${LU(S.top.vf)} al frente y ${LU(S.top.vl)} a los lados. Canto recto.`,boxes:[B(-S.top.vl,Htop,0,cw,tc,cd)],ex:[0,380,0]}); }
+  }else if(top==='entre'){
+    add({grp:'Cuerpo',name:'Techo'+lbl,a:W-2*T,b:Di,e:T,canto:'canto al frente',role:'side',grain:'x',note:'Va entre los laterales, arriba.',boxes:[B(T,H-T,tb,W-2*T,T,Di)],ex:[0,260,0]});
+  }
+  const backTop=top==='entre'?H:Htop;
+  if(S.back!==false) add({grp:'Cuerpo',name:'Respaldo'+lbl,a:W,b:backTop-pisoY,e:tb,mat:'thin',grain:'y',note:'Se clava y pega por detrás.'+(S.backNote?' '+S.backNote:''),boxes:[B(0,pisoY,0,W,backTop-pisoY,tb)],ex:[0,0,-360]});
+  // base
+  if(zoc){ add({grp:'Base',name:'Zócalo (frente)'+lbl,a:W-2*T,b:bh,e:T,canto:'canto al frente',role:'side',grain:'x',veta:W-2*T,note:'Metido 3 cm hacia adentro. Aquí van las patas niveladoras.',boxes:[B(T,0,D-30-T,W-2*T,bh,T)],ex:[0,-170,260]});
+    add({grp:'Base',name:'Zócalo (atrás)'+lbl,a:W-2*T,b:bh,e:T,grain:'x',boxes:[B(T,0,tb,W-2*T,bh,T)],ex:[0,-170,-180]}); out.count.nivel+=W>1000?6:4; }
+  if(pat){ const ls=S.base.leg||45; [[10,tb+10],[W-10-ls,tb+10],[10,D-10-ls],[W-10-ls,D-10-ls]].forEach(([x,z],i)=>add({grp:'Base',name:'Pata'+lbl,a:bh,b:ls,e:ls,mat:'leg',role:'side',grain:'y',veta:bh,
+      note:`Escuadría ${LU(ls)} × ${LU(ls)}, atornillada al piso del mueble con placa o tarugo.`,boxes:[B(x,0,z,ls,bh,ls)],ex:[x<W/2?-160:160,-220,z<D/2?-120:120]})); }
+  if(base==='flotado') out.count.colgador+=1;
+  // columnas
+  const n=S.cols.length, axes=[]; for(let j=1;j<n;j++) axes.push((S.colAxes&&S.colAxes[j-1])||W*j/n);
+  axes.forEach(ax=>add({grp:'Cuerpo',name:'Separador vertical'+lbl,a:y1-y0,b:Di,e:T,canto:'canto al frente',role:'side',grain:'y',note:`Su centro va a ${LU(ax)} del lateral izquierdo${S.label?' de la cajonera':''}.`,boxes:[B(ax-T/2,y0,tb,T,y1-y0,Di)],ex:[0,0,140]}));
+  const lims=[T,...axes,W-T];
+  const yFB=zoc?bh:yb, yFT=top==='sobre'?Htop-e:H-e;
+  const Ls=[...SLIDES].reverse().find(s=>s<=Di-10)||0;
+  out.info.slide=Math.max(out.info.slide||0,Ls);
+  S.cols.forEach((col,j)=>{
+    const ix0=j===0?T:lims[j]+T/2, ix1=j===n-1?W-T:lims[j+1]-T/2, iw=ix1-ix0;
+    const fx0=j===0?e:axes[j-1]+g/2, fx1=j===n-1?W-e:axes[j]-g/2, fw=fx1-fx0;
+    out.info.spans.push(iw);
+    const Z=col.zones, nz=Z.length, avail=yFT-yFB-g*(nz-1);
+    const fixed=Z.reduce((a,z)=>a+(z.h>0?z.h:0),0), nauto=Z.filter(z=>!(z.h>0)).length;
+    const hs=Z.map(z=>z.h>0?z.h:(avail-fixed)/Math.max(1,nauto));
+    if(hs.some(h=>h<40)) out.msgs.push(['bad',`Los altos de las secciones no caben${S.label?' en la '+S.label:''}: revisa las medidas que escribiste.`]);
+    let y=yFT; const fys=[];
+    hs.forEach(h=>{y-=h; fys.push(y); y-=g;});
+    const divs=[]; for(let i=0;i<nz-1;i++) divs.push(fys[i]-g/2);
+    divs.forEach(yc=>add({grp:'Cuerpo',name:'Repisa divisoria'+lbl,a:iw,b:Di,e:T,canto:'canto al frente',role:'side',grain:'x',note:`Fija; su centro a ${LU(yc)} del suelo.`,boxes:[B(ix0,yc-T/2,tb,iw,T,Di)],ex:[(ix0+iw/2-cx)*0.25,0,150]}));
+    Z.forEach((z,i)=>{
+      const fy=fys[i], fh=hs[i], ct=i===0?y1:divs[i-1]-T/2, cb=i===nz-1?y0:divs[i]+T/2, ch=ct-cb;
+      const spread=[(fx0+fw/2-cx)*0.35,(fy+fh/2-H/2)*0.35];
+      const shelves=(k,adj)=>{ for(let s=1;s<=k;s++){const ys=cb+ch*s/(k+1)-T/2;
+        add({grp:'Cuerpo',name:adj?'Repisa ajustable':'Repisa fija',a:iw-(adj?2:0),b:Di-20,e:T,canto:'canto al frente',role:'side',grain:'x',note:adj?'Va sobre 4 soportes (pernos); deja 1 mm por lado.':`Fija; su cara de abajo a ${LU(ys)} del suelo.`,boxes:[B(ix0+(adj?1:0),ys,tb+20,iw-(adj?2:0),T,Di-20)],ex:[spread[0],spread[1]*0.5,230]});
+        if(adj) out.count.pin+=4; } };
+      if(z.t==='cajon'){
+        const id=out.mov.length; out.mov.push({kind:'drawer',open:Ls*0.8});
+        add({grp:'Frentes',name:'Frente de cajón',a:fw,b:fh,e:T,canto:'4 lados',role:'front',grain:'x',veta:fw,mov:id,boxes:[B(fx0,fy,D,fw,fh,T)],ex:[spread[0],spread[1],Ls+560]});
+        const hb=fl5(ch-30), bw=Math.floor((iw-25.4)*2)/2, bx=ix0+12.7, by=cb+10, bz=D-Ls;
+        if(hb<60) out.msgs.push(['bad',`Un cajón queda con caja de ${LU(hb)} de alto; lo mínimo útil son 6 cm.`]);
+        [0,1].forEach(s=>add({grp:'Cajones',name:'Lado de cajón',a:Ls,b:hb,e:ts,mat:'box',canto:'arriba',grain:'z',mov:id,note:`Ranura de ${LU(tfo)} a 1 cm de abajo para el piso del cajón.`,boxes:[B(s?bx+bw-ts:bx,by,bz,ts,hb,Ls)],ex:[spread[0]+(s?90:-90),spread[1],Ls+300]}));
+        [bz+Ls-ts,bz].forEach((zz,s)=>add({grp:'Cajones',name:'Tapa delantera y trasera de la caja',a:bw-2*ts,b:hb,e:ts,mat:'box',canto:'arriba',grain:'x',mov:id,note:`La caja mide ${LU(bw)} de ancho por fuera.`,boxes:[B(bx+ts,by,zz,bw-2*ts,hb,ts)],ex:[spread[0],spread[1],Ls+300+(s?-110:110)]}));
+        add({grp:'Cajones',name:'Piso del cajón',a:bw-2*ts+12,b:Ls-2*ts+12,e:tfo,mat:'thin',grain:'x',mov:id,note:'Entra 6 mm en la ranura de cada lado.',boxes:[B(bx+ts,by+10,bz+ts,bw-2*ts,tfo,Ls-2*ts)],ex:[spread[0],spread[1]-90,Ls+300]});
+        out.count.drawers++; out.count.fronts++; out.fronts.push({x:fx0,y:fy,w:fw,h:fh,col:j});
+      }else if(z.t==='puertas'||z.t==='abatible'){
+        const flap=z.t==='abatible', nd=flap?1:(z.n||(fw>600?2:1)), dw=(fw-g*(nd-1))/nd;
+        for(let d=0;d<nd;d++){ const dx=fx0+d*(dw+g), hingeLeft=nd===2?d===0:(z.hinge!=='der');
+          const id=out.mov.length; out.mov.push(flap?{kind:'flap',py:fy,pz:D}:{kind:'door',px:hingeLeft?dx:dx+dw,pz:D,dir:hingeLeft?-1:1});
+          add({grp:'Frentes',name:flap?'Puerta abatible (abre hacia abajo)':'Puerta',a:dw,b:fh,e:T,canto:'4 lados',role:'front',grain:flap?'x':'y',veta:flap?dw:fh,mov:id,
+            note:flap?'Con 2 bisagras abajo y 2 compases.':`Bisagra ${hingeLeft?'izquierda':'derecha'}, de cazoleta de 35 mm.`,boxes:[B(dx,fy,D,dw,fh,T)],ex:[spread[0]+(d-(nd-1)/2)*60,spread[1],420]});
+          if(flap){out.count.flaps++; out.count.bisagras+=2;} else {out.count.doors++; out.count.bisagras+=fh<=900?2:fh<=1600?3:4;}
+          out.count.fronts++; out.fronts.push({x:dx,y:fy,w:dw,h:fh,col:j}); }
+        shelves(z.k||0,z.adj!==false&&!!z.adj);
+      }else if(z.t==='nicho'){
+        shelves(z.k||0,!!z.adj);
+        if(z.vent) out.notes.push(`Nicho de aparatos${S.label?' ('+S.label+')':''}: calar el respaldo detrás del nicho (ventana de ${LU(Math.min(iw-60,400))} × ${LU(Math.min(ch-60,150))}) para ventilación y cables.`);
+        out.fronts.push({x:fx0,y:fy,w:fw,h:fh,col:j,open:true});
+      }
+    });
+  });
+  out.info.y0=y0; out.info.y1=y1; out.info.Htop=Htop; out.info.yb=yb;
+  return out;
+}
+
+// ====================== Constructores por tipo ======================
+function compute(){
+  const c=cfg, t=c.type, p=P();
+  const T=c.matKind==='maciza'?+c.tM:+c.tT, tb=6, ts=c.boxMat==='maciza'?16:15, tfo=6, g=+c.gap;
+  const out={pieces:[],mov:[],msgs:[],notes:[],fronts:[],count:{drawers:0,doors:0,flaps:0,bisagras:0,fronts:0,pin:0,nivel:0,colgador:0,pasa:0,correa:0,escuadra:0},info:{spans:[]}};
+  const base={kind:p.base,h:(p.baseH||0)*10,elev:(p.elev||0)*10,leg:c.matKind==='maciza'?Math.max(45,T*2):45};
+  const W=p.W*10, D=p.D*10, H=p.H*10;
+  const S={T,tb,ts,tfo,g,W,H,D};
+  if(t==='buro'){
+    const zones=p.zones.map(z=>({t:z.t,h:(z.h||0)*10,k:z.k||0}));
+    caseBuild(Object.assign(S,{base,top:{kind:'sobre',vf:p.vf*10,vl:p.vl*10},cols:[{zones}],backNote:p.pasa?'Hacer un barreno de 60 mm arriba al centro para pasar cables.':''}),out);
+    if(p.pasa) out.count.pasa++;
+    out.count.correa+=p.base==='flotado'?0:1; out.count.escuadra+=6;
+    if(p.colchon>0){const dif=H-p.colchon*10; out.msgs.push([Math.abs(dif)<=50?'ok':'warn',`Cubierta a ${LK(H)}: ${Math.abs(dif)<=50?'bien':'lejos'} de la altura del colchón (${LK(p.colchon*10)}), diferencia de ${LK(Math.abs(dif))}.`]);}
+    if(H<500||H>700) out.msgs.push(['warn','Un buró suele medir de 55 a 65 cm de alto.']);
+  }else if(t==='tv'){
+    const cols=p.mods.map(m=>({zones:m.t==='cajones'?Array.from({length:Math.max(1,m.n||1)},()=>({t:'cajon',h:0})):m.t==='nicho'?[{t:'nicho',k:m.k||0,vent:m.vent}]:[{t:m.t,k:m.k||0,adj:false}]}));
+    const anyVent=p.mods.some(m=>m.t==='nicho'&&m.vent);
+    caseBuild(Object.assign(S,{base,top:{kind:'sobre',vf:p.vf*10,vl:p.vl*10},cols}),out);
+    if(p.pasa||anyVent) out.count.pasa+=Math.max(1,p.mods.filter(m=>m.t==='nicho').length);
+    out.count.correa+=p.base==='flotado'?0:1; out.count.escuadra+=8;
+    const tvW=p.tvIn*2.54*0.8716*10, tvH=p.tvIn*2.54*0.4903*10;
+    out.info.tv={w:tvW,h:tvH,rec:Math.max(350,Math.min(650,1000-tvH/2-80))};   // ojos sentado ≈100 cm, base de la TV ≈8 cm
+    if(W<tvW*1.15) out.msgs.push(['warn',`El mueble mide ${LK(W)} y la pantalla de ${p.tvIn}" mide ${LK(tvW)} de ancho: se recomienda al menos ${LK(tvW*1.2)}.`]);
+    if(Math.abs(H-out.info.tv.rec)>80) out.msgs.push(['warn',`Para una TV de ${p.tvIn}" encima, la altura que deja el centro de la pantalla a la altura de los ojos es de unos ${LK(out.info.tv.rec)}.`]);
+    if(p.base==='flotado') out.msgs.push(['warn','Mueble flotado: cuélgalo de muro de block o concreto con riel de carga (francés) o placas, y taquetes de carga.']);
+  }else if(t==='librero'){
+    const zones=[{t:'nicho',k:p.shelves,adj:p.adj}]; if(p.low) zones.push({t:p.lowType==='cajon'?'cajon':'puertas',h:(p.lowH-(p.baseH||0))*10,k:p.lowType==='puertas'?1:0,adj:false});
+    const cols=Array.from({length:p.cols},()=>({zones:clone(zones)}));
+    caseBuild(Object.assign(S,{base,top:{kind:'entre'},cols}),out);
+    out.count.correa+=2;
+    const lim=c.matKind==='maciza'?(T>=25?1100:900):(T>=18?800:700), mx=Math.max(...out.info.spans);
+    if(mx>lim) out.msgs.push(['bad',`Las repisas quedan de ${LK(mx)} entre apoyos; con este material y grueso el máximo recomendado es ${LK(lim)} para libros. Agrega una columna o sube el grueso.`]);
+    else out.msgs.push(['ok',`Repisas de ${LK(mx)} entre apoyos: dentro del máximo de ${LK(lim)} para este material.`]);
+    if(H>2400) out.msgs.push(['warn','Más de 2.40 m de alto: considera hacerlo en dos módulos para poder meterlo y pararlo.']);
+  }else if(t==='escritorio'){
+    const tc=T, vf=(p.vf||0)*10, Hs=H-tc;
+    const cover={grp:'Cubierta',name:'Cubierta',a:W,b:D+vf,e:tc,canto:'frente y 2 lados',role:'top',grain:'x',veta:W,mat:'main',
+      note:`${p.pasa?`${p.pasa} barreno${p.pasa>1?'s':''} de 60 mm atrás para pasacables. `:''}Canto recto.`,boxes:[{x:0,y:Hs,z:0,w:W,h:tc,d:D+vf}],ex:[0,380,0]};
+    const add=o=>out.pieces.push(Object.assign({canto:'',note:'',role:'in',mat:'main',veta:null},o));
+    let kneeL=0, kneeR=W, kneeH=Hs;
+    const panel=(x,name)=>add({grp:'Estructura',name,a:Hs,b:D,e:T,canto:'canto al frente y arriba',role:'side',grain:'y',veta:Hs,note:'Va del piso a la cubierta, todo el fondo.',boxes:[{x,y:0,z:0,w:T,h:Hs,d:D}],ex:[x<W/2?-300:300,0,0]});
+    if(p.sup==='patas'){
+      const ls=c.matKind==='maciza'?Math.max(50,T*2):50, fa=90, inset=20;
+      [[inset,inset],[W-inset-ls,inset],[inset,D-inset-ls],[W-inset-ls,D-inset-ls]].forEach(([x,z])=>add({grp:'Estructura',name:'Pata',a:Hs,b:ls,e:ls,mat:'leg',role:'side',grain:'y',veta:Hs,note:`Escuadría ${LU(ls)} × ${LU(ls)}.`,boxes:[{x,y:0,z,w:ls,h:Hs,d:ls}],ex:[x<W/2?-200:200,-60,z<D/2?-160:160]}));
+      [inset+ls/2-T/2,D-inset-ls/2-T/2].forEach((z,i)=>add({grp:'Estructura',name:'Faldón largo',a:W-2*inset-2*ls,b:fa,e:T,role:'side',grain:'x',veta:W-2*inset-2*ls,note:'Entre patas, ensamblado con espiga o tornillo de bolsillo.',boxes:[{x:inset+ls,y:Hs-fa,z,w:W-2*inset-2*ls,h:fa,d:T}],ex:[0,120,i?180:-180]}));
+      [inset+ls/2-T/2,W-inset-ls/2-T/2].forEach(x=>add({grp:'Estructura',name:'Faldón corto',a:D-2*inset-2*ls,b:fa,e:T,role:'side',grain:'x',veta:D-2*inset-2*ls,note:'Entre patas, a los lados.',boxes:[{x,y:Hs-fa,z:inset+ls,w:T,h:fa,d:D-2*inset-2*ls}],ex:[x<W/2?-200:200,120,0]}));
+      kneeL=inset+ls; kneeR=W-inset-ls; kneeH=Hs-fa; out.count.escuadra+=8;
+    }else{
+      const cw=p.cajW*10, right=p.side==='der';
+      if(p.sup==='cajonera'){
+        const x0=right?W-cw:0;
+        caseBuild({T,tb,ts,tfo,g,W:cw,H:Hs,D:D-20,x0,base:{kind:'zocalo',h:80},top:{kind:'entre'},label:'cajonera',cols:[{zones:Array.from({length:p.cajN},()=>({t:'cajon',h:0}))}]},out);
+        panel(right?0:W-T,'Panel lateral');
+        if(right){kneeL=T; kneeR=W-cw;} else {kneeL=cw; kneeR=W-T;}
+      }else{ panel(0,'Panel lateral'); panel(W-T,'Panel lateral'); kneeL=T; kneeR=W-T; }
+      if(p.modesty){ const mh=Math.min(400,Hs-150);
+        add({grp:'Estructura',name:'Panel trasero (de modestia)',a:kneeR-kneeL,b:mh,e:T,role:'side',grain:'x',veta:kneeR-kneeL,note:'Entre los apoyos, 5 cm adelante del muro; da rigidez y tapa cables.',boxes:[{x:kneeL,y:Hs-mh,z:50,w:kneeR-kneeL,h:mh,d:T}],ex:[0,0,-260]}); }
+      add({grp:'Estructura',name:'Tira de amarre bajo cubierta',a:kneeR-kneeL,b:80,e:T,role:'side',grain:'x',canto:'canto al frente',veta:kneeR-kneeL,note:'Al frente, bajo la cubierta, entre los apoyos.',boxes:[{x:kneeL,y:Hs-80,z:D-T-20,w:kneeR-kneeL,h:80,d:T}],ex:[0,140,240]});
+      kneeH=Hs-80; out.count.escuadra+=8;
+    }
+    out.pieces.push(Object.assign({canto:'',role:'top',mat:'main'},cover));
+    out.count.pasa+=p.pasa||0; out.count.correa+=0;
+    const kw=kneeR-kneeL;
+    out.msgs.push([kw>=600?'ok':'bad',`Espacio para piernas: ${LK(kw)} de ancho${kw<600?' (mínimo 60 cm)':''}.`]);
+    out.msgs.push([kneeH>=630?'ok':'warn',`Altura libre bajo la cubierta: ${LK(kneeH)}${kneeH<630?' (se recomienda 63 cm o más)':''}.`]);
+    if(H<720||H>770) out.msgs.push(['warn','La altura cómoda para escribir es de 73 a 76 cm.']);
+    out.info.slide=out.info.slide||0;
+  }
+  // claves del despiece
+  const GID={Cuerpo:'C',Estructura:'E',Base:'B',Cubierta:'T',Frentes:'F',Cajones:'K'};
+  const rows=[], idx={}, byKey={};
+  out.pieces.forEach(q=>{q.a=mm(q.a); q.b=mm(q.b); q.e=mm(q.e); const A=Math.max(q.a,q.b), Bm=Math.min(q.a,q.b), k=[q.grp,q.name,A,Bm,q.e,q.mat].join('|');
+    let rw=byKey[k]; if(!rw){idx[q.grp]=(idx[q.grp]||0)+1; rw=byKey[k]={id:GID[q.grp]+idx[q.grp],grp:q.grp,name:q.name,A,B:Bm,e:q.e,mat:q.mat,q:0,canto:q.canto,notes:new Set(),veta:q.veta!=null?mm(q.veta):null,role:q.role}; rows.push(rw);}
+    rw.q++; if(q.note) rw.notes.add(q.note); q.id=rw.id;});
+  rows.forEach(rw=>{rw.note=[...rw.notes].join(' ');});
+  const ORD=Object.keys(GID); rows.sort((a,b)=>ORD.indexOf(a.grp)-ORD.indexOf(b.grp));
+  out.rows=rows; out.T=T; out.tb=tb; out.W=W; out.D=D; out.H=H;
+  out.cost=costOf(out);
+  return out;
+}
+
+// ====================== Materiales: hojas y pies tabla ======================
+const SHEET=1.22*2.44;
+function matLabel(q){ const c=cfg;
+  if(q.mat==='leg') return `${SPECIES[c.matKind==='maciza'?c.species:'pino'].n} maciza`;
+  if(q.mat==='thin') return `${c.matKind==='tablero'&&c.tablero!=='Melamina'?c.tablero:'Triplay'} ${q.e} mm`;
+  if(q.mat==='box') return c.boxMat==='maciza'?'Pino maciza':'Triplay';
+  return c.matKind==='maciza'?`${SPECIES[c.species].n} maciza`:`${c.tablero} ${q.e} mm`; }
+function isSolid(q){ const c=cfg; return q.mat==='leg'||(q.mat==='main'&&c.matKind==='maciza')||(q.mat==='box'&&c.boxMat==='maciza'); }
+const nominalIn=e=>e<=19?1:e<=32?1.5:e<=45?2:e<=60?2.5:3;
+function costOf(R){
+  const c=cfg, sheets={}, solid={}; let cantoM=0;
+  R.pieces.forEach(q=>{
+    if(isSolid(q)){ const sp=q.mat==='box'||q.mat==='leg'&&c.matKind!=='maciza'?'pino':c.species; const pt=nominalIn(q.e)*(q.b/25.4)*(q.a/304.8)/12*1.15; /* pie tabla = grueso (in) × ancho (in) × largo (ft) / 12 */ solid[sp]=(solid[sp]||0)+pt; }
+    else{ const m=q.mat==='box'?'Triplay':q.mat==='thin'?(c.matKind==='tablero'&&c.tablero!=='Melamina'?c.tablero:'Triplay'):c.tablero, k=m+'|'+q.e; sheets[k]=(sheets[k]||0)+q.a*q.b/1e6;
+      if(q.canto&&m!=='MDF'){ const A=Math.max(q.a,q.b)/1000, B=Math.min(q.a,q.b)/1000; cantoM+=q.canto.startsWith('4')?2*(A+B):q.canto.startsWith('frente y 2')?A+2*B:A; } }
+  });
+  const lines=[]; let mat=0;
+  Object.entries(sheets).forEach(([k,a])=>{const [m,e]=k.split('|'), pr=(PR[m]||PR.MDF)[e]||(PR.MDF[e]||800), frac=a*1.25/SHEET, nn=frac<=0.5?0.5:Math.ceil(frac), cost=nn*pr; mat+=cost;
+    lines.push(['Tablero',`${m} ${e} mm: ${a.toFixed(2)} m² (con 25% de desperdicio) → ${nn===0.5?'media hoja':nn+' hoja'+(nn>1?'s':'')} × ${money(pr)}`,cost]);});
+  Object.entries(solid).forEach(([sp,pt])=>{const pr=PR.maciza[sp], cost=pt*pr; mat+=cost; lines.push(['Madera maciza',`${SPECIES[sp].n}: ${pt.toFixed(1)} pies tabla (con 15% de desperdicio) × ${money(pr)}`,cost]);});
+  if(cantoM>0){const cost=cantoM*1.1*PR.canto; mat+=cost; lines.push(['Canto',`${(cantoM*1.1).toFixed(1)} m × ${money(PR.canto)}`,cost]);}
+  const HW=hardware(R); let hw=0; HW.forEach(h=>{hw+=h[3]||0;}); lines.push(['Herrajes',HW.map(h=>h[1]+' '+h[0].toLowerCase()).join(', '),hw]);
+  // acabado
+  let m2=0; R.pieces.forEach(q=>{const f=q.role==='front'?1.6:q.role==='top'?1.2:q.role==='side'?1.0:0; m2+=f*q.a*q.b/1e6;});
+  const melam=c.matKind==='tablero'&&c.tablero==='Melamina';
+  const finPrice=melam?0:(c.fin==='pintado'?PR.fin.pintado:PR.fin.natural), fin=m2*finPrice;
+  lines.push(['Acabado',melam?'Melamina: sin pintura':`${m2.toFixed(1)} m² de ${c.fin==='pintado'?'laca':'sellador y barniz'} (material) × ${money(finPrice)}`,fin]);
+  const cons=PR.hw.tornilleria+0.05*mat; lines.push(['Consumibles','Tornillería, pegamento, lijas (y 5% del material)',cons]);
+  // horas de trabajo
+  const base={buro:3,tv:6,librero:5,escritorio:5}[c.type]||5, C=R.count;
+  let h=base+R.pieces.length*0.08+C.drawers*1.0+C.doors*0.5+C.flaps*0.7+(melam?0:m2*(c.fin==='pintado'?0.5:0.35));
+  if(c.matKind==='maciza') h*=1.5;
+  h=Math.round(h*2)/2;
+  const direct=mat+hw+fin+cons;
+  const I=PR.ind, Tt=PR.tal;
+  const iDir=direct*(1+I.merma/100), iMO=h*I.hora, iSub=iDir+iMO, iPre=iSub*(1+I.util/100), iTot=iPre*(I.iva?1.16:1);
+  const tDir=direct*(1+Tt.merma/100), tMO=h*Tt.hora, tInd=(tDir+tMO)*Tt.indirectos/100, tSub=tDir+tMO+tInd, tPre=tSub*(1+Tt.util/100), tTot=tPre*(Tt.iva?1.16:1);
+  return {lines,mat,hw,fin,cons,direct,h,m2,
+    ind:{dir:iDir,mo:iMO,util:iPre-iSub,iva:I.iva?iPre*0.16:0,tot:round50(iTot),lo:round50(iTot*0.9),hi:round50(iTot*1.1)},
+    tal:{dir:tDir,mo:tMO,ind:tInd,util:tPre-tSub,iva:Tt.iva?tPre*0.16:0,tot:round50(tTot),lo:round50(tTot*0.9),hi:round50(tTot*1.1)}};
+}
+function hardware(R){
+  const c=cfg, C=R.count, H=[], P_=PR.hw;
+  const push=(n,q,s,u)=>{if(q>0) H.push([n,q,s,q*u]);};
+  const rk=c.slide==='push'?'rielPush':c.slide==='suave'?'rielSuave':'rielNormal';
+  push('Rieles de cajón (juegos)',C.drawers,`De ${LU(R.info.slide||450)}, extensión total, a los lados del cajón (12.7 mm por lado)${c.slide==='suave'?', cierre suave':c.slide==='push'?', empujar para abrir':''}.`,P_[rk]);
+  push('Bisagras de cazoleta 35 mm',C.bisagras,`${c.slide==='suave'?'Con cierre suave':'Normales'}, para puerta sobrepuesta.`,c.slide==='suave'?P_.bisagraSuave:P_.bisagraNormal);
+  push('Compases o pistones',C.flaps*2,'Para puertas que abren hacia abajo; detienen la puerta abierta.',P_.compas);
+  if(c.slide!=='push'&&c.pull!=='ninguna') push('Jaladeras',C.drawers+C.doors+C.flaps,c.pull==='boton'?'Botón.':'Barra de 128 a 160 mm entre tornillos.',c.pull==='boton'?P_.boton:P_.barra);
+  push('Soportes de repisa (pernos)',C.pin,'Para repisas ajustables; perforaciones de 5 mm cada 32 mm.',P_.pin);
+  push('Patas niveladoras ocultas',C.nivel,'Atornilladas al zócalo, ajustables desde adentro.',P_.nivelador);
+  push('Tapa pasacables 60 mm',C.pasa,'Va en el barreno para que se vea limpio.',P_.pasacables);
+  push('Herraje para colgar (par)',C.colgador,'Riel francés o placas colgadoras de carga, con taquetes a muro firme.',P_.colgador);
+  push('Correa para fijar al muro',C.correa,'Evita que el mueble se vaya hacia adelante.',P_.correa);
+  push('Escuadras de unión',C.escuadra,'Para atornillar cubierta y estructura por dentro, sin tornillos a la vista.',P_.escuadra);
+  return H;
+}
+function notes(R){
+  const c=cfg, N=[];
+  N.push(`Medida total: ${LK(R.W)} de ancho × ${LK(R.H)} de alto × ${LK(R.D)} de fondo.`);
+  N.push(c.matKind==='maciza'?`Madera maciza de ${SPECIES[c.species].n.toLowerCase()} de ${LU(R.T)} terminado. Deja secar y aclimatar la madera; las piezas anchas se hacen pegando tablas por el canto con la veta alternada.`:`${c.tablero} de ${LU(R.T)}. ${c.tablero==='MDF'?'Sella los cantos antes de pintar.':'Cantos con canto PVC.'}`);
+  if(R.count.drawers) N.push('Rieles a los lados: la caja del cajón mide justo el hueco menos 25.4 mm (12.7 mm por lado). Mejor 1 mm menos que 1 mm más.');
+  if(R.count.doors) N.push('Puertas sobrepuestas con bisagra de cazoleta de 35 mm; barreno a 22 mm de la orilla de la puerta.');
+  N.push(...R.notes);
+  if(c.fin==='natural'||c.finTop==='natural') N.push(`Tono de la madera: ${woodName(c.woodHex)} (${c.woodHex.toUpperCase()}). Lleva una muestra para igualar el tinte.`);
+  N.push('Seguridad: fija el mueble al muro con su correa o herraje de colgar. Usa pintura o barniz bajo en olor (bajo VOC).');
+  return N;
+}
+
+// ====================== Catálogo ======================
+function renderCatalog(){
+  const el=$('catalog'); let h='<h2>Fase 1 · muebles de caja</h2>';
+  Object.entries(TYPES).forEach(([k,t])=>{h+=`<button class="card" data-type="${k}">${ICON[k]}<b>${t.name}</b><span>${t.desc}</span></button>`;});
+  h+=`<a class="card" href="../comoda/" style="text-decoration:none">${ICON.comoda}<b>Cómoda</b><span>Herramienta propia del cuarto del bebé, con frentes al ras y madera.</span></a>`;
+  h+='<h2>Próximamente</h2>';
+  SOON.forEach(([n,d])=>{h+=`<button class="card" disabled>${ICON.otro}<b>${n}</b><span>${d}</span><span class="tag">Próximamente</span></button>`;});
+  el.innerHTML=h;
+  el.querySelectorAll('button[data-type]').forEach(b=>b.onclick=()=>openType(b.dataset.type));
+}
+function openType(t){ cfg.type=t; save(); showTool(); update(); setView('iso'); }
+function showTool(){
+  const has=!!cfg.type;
+  $('catalog').hidden=has; $('viewer').hidden=!has; $('tool').hidden=!has; $('hdrActions').hidden=!has;
+  $('title').textContent=has?`${TYPES[cfg.type].name} a medida`:'Muebles a medida';
+  $('subtitle').textContent=has?'Ajusta medidas y criterios; el despiece, los herrajes y el costo se recalculan solos.':'Elige el mueble. Se abren sus medidas y criterios propios, el despiece para el carpintero y un costo aproximado con precio sugerido para Sinaloa.';
+  if(has) requestAnimationFrame(()=>{if(T3){const el=$('v3d'); T3.renderer.setSize(el.clientWidth,el.clientHeight); T3.cam.aspect=el.clientWidth/el.clientHeight; T3.cam.updateProjectionMatrix();}});
+}
+$('changeType').onclick=()=>{cfg.type=null; save(); showTool(); window.scrollTo({top:0});};
+
+// ====================== Menús propios de cada mueble ======================
+const field=(lab,key,o={})=>`<label class="f${o.wide?' wide':''}">${lab}${o.unit!==false?` (<span class="u">${IN()?'pulg':'cm'}</span>)`:''}<input data-k="${key}" type="number" inputmode="decimal" step="${o.step||(IN()?0.0625:0.5)}" value="${o.raw?P()[key]:toUI(P()[key])}" ${o.raw?'data-raw="1"':''}></label>`;
+const segH=(lab,key,opts)=>`<div><div class="seglbl">${lab}</div><div class="seg" data-seg="${key}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" aria-pressed="${String(P()[key])===String(v)}">${l}</button>`).join('')}</div></div>`;
+const chk=(lab,key)=>`<label class="f chk"><input type="checkbox" data-c="${key}" ${P()[key]?'checked':''}> ${lab}</label>`;
+const baseMenu=()=>segH('Base','base',[['patas','Con patas'],['zocalo','Zócalo'],['flotado','Flotado (colgado)']])+`<div class="grid">${P().base==='flotado'?field('Altura desde el piso','elev'):field(P().base==='patas'?'Alto de las patas':'Alto del zócalo','baseH')}</div>`;
+const ZT={cajon:'Cajón',nicho:'Nicho abierto',puertas:'Puerta',abatible:'Abatible hacia abajo'};
+function renderMenus(){
+  const t=cfg.type, p=P(); let h='';
+  if(t==='buro'){
+    h+=`<div class="grid">${field('Ancho','W')}${field('Fondo','D')}${field('Alto total','H')}${field('Altura del colchón (opcional)','colchon')}${field('Sobresale cubierta al frente','vf',{step:IN()?0.0625:0.1})}${field('Sobresale a los lados','vl',{step:IN()?0.0625:0.1})}</div>`;
+    h+=`<div class="actions"><button class="b sm" data-act="matchBed">Ajustar alto al colchón</button></div>`+baseMenu();
+    h+=`<div><div class="seglbl">Secciones de arriba hacia abajo</div><div class="zones">${p.zones.map((z,i)=>`<div class="zone"><span class="zt">Sección ${i+1}</span>
+      <label class="f">Tipo<select data-zt="${i}">${Object.entries(ZT).map(([v,l])=>`<option value="${v}" ${z.t===v?'selected':''}>${l}</option>`).join('')}</select></label>
+      <label class="f">Alto del frente (<span class="u">${IN()?'pulg':'cm'}</span>; 0 = solo)<input type="number" inputmode="decimal" step="${IN()?0.0625:0.5}" data-zh="${i}" value="${toUI(z.h||0)}"></label>
+      <label class="f">Repisas<input type="number" min="0" max="4" step="1" data-zk="${i}" value="${z.k||0}" ${z.t==='cajon'?'disabled':''}></label>
+      <button class="b sm" data-zdel="${i}" ${p.zones.length<2?'disabled':''}>Quitar</button></div>`).join('')}</div></div>`;
+    h+=`<div class="actions"><button class="b sm" data-zadd="cajon">+ Cajón</button><button class="b sm" data-zadd="nicho">+ Nicho</button><button class="b sm" data-zadd="puertas">+ Puerta</button></div>`;
+    h+=`<div class="grid">${chk('Pasacables atrás','pasa')}</div>`;
+  }else if(t==='tv'){
+    const tv=current&&current.info.tv;
+    h+=`<div class="grid">${field('Pantalla (pulgadas)','tvIn',{unit:false,raw:true,step:1})}${field('Largo','W')}${field('Fondo','D')}${field('Alto total','H')}${field('Sobresale cubierta al frente','vf',{step:IN()?0.0625:0.1})}${field('Sobresale a los lados','vl',{step:IN()?0.0625:0.1})}</div>`;
+    if(tv) h+=`<p class="help">Pantalla de ${p.tvIn}": ${LK(tv.w)} × ${LK(tv.h)}. Largo recomendado: ${LK(tv.w*1.2)} a ${LK(tv.w*1.5)}. Alto recomendado: unos ${LK(tv.rec)}.</p><div class="actions"><button class="b sm" data-act="tvRec">Usar medidas recomendadas</button></div>`;
+    h+=baseMenu();
+    h+=`<div><div class="seglbl">Módulos de izquierda a derecha</div><div class="zones">${p.mods.map((m,i)=>`<div class="zone"><span class="zt">Módulo ${i+1}</span>
+      <label class="f">Tipo<select data-mt="${i}">${[['puertas','Puertas'],['abatible','Abatible hacia abajo'],['cajones','Cajones'],['nicho','Nicho abierto']].map(([v,l])=>`<option value="${v}" ${m.t===v?'selected':''}>${l}</option>`).join('')}</select></label>
+      <label class="f">${m.t==='cajones'?'Cuántos cajones':'Repisas'}<input type="number" min="0" max="4" step="1" data-mn="${i}" value="${m.t==='cajones'?(m.n||1):(m.k||0)}"></label>
+      ${m.t==='nicho'?`<label class="f chk"><input type="checkbox" data-mv="${i}" ${m.vent?'checked':''}> Ventilación</label>`:'<span></span>'}
+      <button class="b sm" data-mdel="${i}" ${p.mods.length<2?'disabled':''}>Quitar</button></div>`).join('')}</div></div>`;
+    h+=`<div class="actions"><button class="b sm" data-madd="1" ${p.mods.length>=5?'disabled':''}>+ Módulo</button></div>`;
+  }else if(t==='librero'){
+    h+=`<div class="grid">${field('Ancho','W')}${field('Fondo','D')}${field('Alto total','H')}</div>`+baseMenu();
+    h+=segH('Columnas','cols',[[1,'1'],[2,'2'],[3,'3'],[4,'4']])+segH('Repisas por columna','shelves',[[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6']]);
+    h+=`<div class="grid">${chk('Repisas ajustables','adj')}${chk('Parte de abajo cerrada','low')}</div>`;
+    if(p.low) h+=segH('Abajo lleva','lowType',[['puertas','Puertas'],['cajon','Cajón']])+`<div class="grid">${field('Alto de la parte de abajo','lowH')}</div>`;
+  }else if(t==='escritorio'){
+    h+=`<div class="grid">${field('Ancho','W')}${field('Fondo','D')}${field('Alto','H')}${field('Sobresale cubierta al frente','vf',{step:IN()?0.0625:0.1})}</div>`;
+    h+=segH('Apoyos','sup',[['cajonera','Cajonera y panel'],['paneles','Dos paneles'],['patas','Patas con faldón']]);
+    if(p.sup==='cajonera') h+=segH('Cajonera del lado','side',[['izq','Izquierdo'],['der','Derecho']])+`<div class="grid">${field('Ancho de la cajonera','cajW')}</div>`+segH('Cajones','cajN',[[2,'2'],[3,'3'],[4,'4']]);
+    if(p.sup!=='patas') h+=`<div class="grid">${chk('Panel trasero (de modestia)','modesty')}</div>`;
+    h+=segH('Pasacables en la cubierta','pasa',[[0,'Ninguno'],[1,'1'],[2,'2']]);
+  }
+  $('typeMenus').innerHTML=h;
+  bindMenus();
+}
+function bindMenus(){
+  const m=$('typeMenus'), p=P();
+  m.querySelectorAll('input[data-k]').forEach(el=>{el.addEventListener('input',()=>{const v=parseFloat(String(el.value).replace(',','.')); if(isFinite(v)){p[el.dataset.k]=el.dataset.raw?v:fromUI(v); update(false);}}); el.addEventListener('change',()=>renderMenus());});
+  m.querySelectorAll('[data-seg]').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=s.dataset.seg, v=b.dataset.v; p[k]=isNaN(+v)?v:+v; update();}));
+  m.querySelectorAll('input[data-c]').forEach(el=>el.onchange=()=>{p[el.dataset.c]=el.checked; update();});
+  m.querySelectorAll('select[data-zt]').forEach(el=>el.onchange=()=>{p.zones[+el.dataset.zt].t=el.value; update();});
+  m.querySelectorAll('input[data-zh]').forEach(el=>el.addEventListener('change',()=>{const v=parseFloat(el.value); p.zones[+el.dataset.zh].h=isFinite(v)?Math.max(0,fromUI(v)):0; update();}));
+  m.querySelectorAll('input[data-zk]').forEach(el=>el.addEventListener('change',()=>{p.zones[+el.dataset.zk].k=Math.max(0,Math.min(4,parseInt(el.value)||0)); update();}));
+  m.querySelectorAll('[data-zdel]').forEach(b=>b.onclick=()=>{p.zones.splice(+b.dataset.zdel,1); update();});
+  m.querySelectorAll('[data-zadd]').forEach(b=>b.onclick=()=>{if(p.zones.length>=5)return; p.zones.push({t:b.dataset.zadd,h:0,k:0}); update();});
+  m.querySelectorAll('select[data-mt]').forEach(el=>el.onchange=()=>{const mo=p.mods[+el.dataset.mt]; mo.t=el.value; if(mo.t==='cajones'&&!mo.n) mo.n=2; update();});
+  m.querySelectorAll('input[data-mn]').forEach(el=>el.addEventListener('change',()=>{const mo=p.mods[+el.dataset.mn], v=Math.max(0,Math.min(4,parseInt(el.value)||0)); if(mo.t==='cajones') mo.n=Math.max(1,v); else mo.k=v; update();}));
+  m.querySelectorAll('input[data-mv]').forEach(el=>el.onchange=()=>{p.mods[+el.dataset.mv].vent=el.checked; update();});
+  m.querySelectorAll('[data-mdel]').forEach(b=>b.onclick=()=>{p.mods.splice(+b.dataset.mdel,1); update();});
+  m.querySelectorAll('[data-madd]').forEach(b=>b.onclick=()=>{p.mods.push({t:'puertas',k:1,n:1}); update();});
+  m.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.act==='matchBed'){ if(p.colchon>0){p.H=p.colchon;} else {$('msgs').insertAdjacentHTML('afterbegin','<div class="msg warn">Escribe la altura del colchón para ajustar el buró.</div>'); return;} }
+    if(b.dataset.act==='tvRec'&&current.info.tv){ const tv=current.info.tv; p.W=Math.round(tv.w*1.3/10/5)*5; p.H=Math.round(tv.rec/10); }
+    update(); });
+}
+
+// ====================== Controles comunes ======================
+function seg(id,opts,get,set){ const el=$(id); el.innerHTML=''; opts.forEach(([v,l])=>{const b=document.createElement('button'); b.type='button'; b.textContent=l; b.setAttribute('aria-pressed',String(get()==v)); b.onclick=()=>{set(v); update();}; el.appendChild(b);}); }
+const SEL=['tablero','tT','species','tM','boxMat','fin','finTop','colF','slide','pull'];
+SEL.forEach(k=>{const el=$('f-'+k); el.value=String(cfg[k]); el.addEventListener('change',()=>{const num=typeof DEF[k]==='number'; cfg[k]=num?+el.value:el.value;
+  if(k==='species'&&cfg.matKind==='maciza'){cfg.woodHex=SPECIES[cfg.species].hex; cfg.woodXY=null;} update();});});
+$('f-veta').checked=cfg.veta; $('f-veta').onchange=()=>{cfg.veta=$('f-veta').checked; update();};
+$('f-gapR').addEventListener('input',()=>{cfg.gap=+$('f-gapR').value; $('f-gap').value=IN()?r1(cfg.gap/25.4*100)/100:cfg.gap; update(false);});
+$('f-gap').addEventListener('change',()=>{const v=parseFloat($('f-gap').value); if(isFinite(v)){cfg.gap=Math.min(10,Math.max(2,IN()?v*25.4:v)); update();}});
+function commonSegs(){
+  seg('s-units',[['mm','mm'],['in','Pulgadas']],()=>cfg.units,v=>{cfg.units=v; renderMenus();});
+  seg('s-matKind',[['tablero','Tablero (MDF, triplay, melamina)'],['maciza','Madera maciza']],()=>cfg.matKind,v=>{cfg.matKind=v; if(v==='maciza'){cfg.fin='natural'; $('f-fin').value='natural'; cfg.woodHex=SPECIES[cfg.species].hex; cfg.woodXY=null;}});
+}
+function syncCommon(){
+  $('g-tablero').hidden=cfg.matKind!=='tablero'; $('g-maciza').hidden=cfg.matKind!=='maciza';
+  SEL.forEach(k=>{if(document.activeElement!==$('f-'+k)) $('f-'+k).value=String(cfg[k]);});
+  $('f-gapR').value=cfg.gap; if(document.activeElement!==$('f-gap')) $('f-gap').value=IN()?Math.round(cfg.gap/25.4*1000)/1000:cfg.gap;
+  document.querySelectorAll('.ug').forEach(s=>s.textContent=IN()?'pulg':'mm');
+  document.querySelectorAll('.u').forEach(s=>s.textContent=IN()?'pulg':'cm');
+}
+
+// ====================== Resultados ======================
+let current=null, lastText='';
+function renderAll(R){
+  const t=TYPES[cfg.type];
+  $('typeTitle').textContent=t.name; $('tips').innerHTML=t.tips.map(s=>`<li>${s}</li>`).join('');
+  $('k-dim').textContent=`${LK(R.W)} × ${LK(R.H)}`; $('k-pz').textContent=R.rows.reduce((a,r)=>a+r.q,0);
+  $('k-ind').textContent=money(R.cost.ind.tot); $('k-tal').textContent=money(R.cost.tal.tot);
+  const msgs=[...R.msgs]; const seen=new Set();
+  $('msgs').innerHTML=msgs.filter(m=>!seen.has(m[1])&&seen.add(m[1])).map(([k,s])=>`<div class="msg ${k}">${s}</div>`).join('');
+  $('sum-type').textContent=`${LK(R.W)} × ${LK(R.D)} × ${LK(R.H)}`;
+  $('sum-mat').textContent=cfg.matKind==='maciza'?`${SPECIES[cfg.species].n} maciza ${LU(R.T)}`:`${cfg.tablero} ${LU(R.T)}`;
+  $('sum-hw').textContent=`${R.count.drawers} cajones · ${R.count.doors+R.count.flaps} puertas`;
+  $('sum-cost').textContent=`${R.cost.h} h de trabajo`;
+  // despiece
+  const wood=cfg.fin==='natural'||cfg.finTop==='natural';
+  $('cut').querySelector('thead').innerHTML=`<tr><th>Clave</th><th>Pieza</th><th>Cant.</th><th>Largo × ancho (${UL()})</th><th>Grueso</th><th>Material</th>${wood?'<th>Veta</th>':''}<th>Canto</th><th>Notas</th></tr>`;
+  const tb=$('cut').querySelector('tbody'); tb.innerHTML=''; let grp='';
+  const lines=[`${t.name.toUpperCase()} A MEDIDA · ${LU(R.W)} × ${LU(R.H)} × ${LU(R.D)}`,`Medidas en ${IN()?'pulgadas':'mm'}`,''];
+  R.rows.forEach(rw=>{
+    if(rw.grp!==grp){grp=rw.grp; tb.insertAdjacentHTML('beforeend',`<tr class="grp"><td colspan="${wood?9:8}">${grp}</td></tr>`); lines.push(grp.toUpperCase());}
+    const ml=matLabel(rw);
+    tb.insertAdjacentHTML('beforeend',`<tr data-id="${rw.id}"><td class="id">${rw.id}</td><td>${rw.name}</td><td class="n">${rw.q}</td><td class="n">${L(rw.A)} × ${L(rw.B)}</td><td class="n">${LU(rw.e)}</td><td>${ml}</td>${wood?`<td class="n">${rw.veta!=null?'en '+L(rw.veta):'—'}</td>`:''}<td>${rw.canto}</td><td>${rw.note}</td></tr>`);
+    lines.push(`${rw.id}  ${rw.q} × ${rw.name}: ${L(rw.A)} × ${L(rw.B)}, grueso ${LU(rw.e)}, ${ml}${wood&&rw.veta!=null?' · veta en '+L(rw.veta):''}${rw.canto?' · canto '+rw.canto:''}${rw.note?' · '+rw.note:''}`);
+  });
+  $('sheets').textContent='Material: '+R.cost.lines.filter(l=>l[0]==='Tablero'||l[0]==='Madera maciza').map(l=>l[1].split(' × ')[0]).join(' · ')+'.';
+  $('sum-desp').textContent=`${R.rows.reduce((a,r)=>a+r.q,0)} piezas · ${R.rows.length} medidas`;
+  const HW=hardware(R), hb=$('hw').querySelector('tbody'); hb.innerHTML='';
+  lines.push('','HERRAJES'); HW.forEach(([a,q,s])=>{hb.insertAdjacentHTML('beforeend',`<tr><td>${a}</td><td class="n">${q}</td><td>${s}</td></tr>`); lines.push(`${q} × ${a}: ${s}`);});
+  const N=notes(R); $('notes').innerHTML=N.map(s=>`<li>${s}</li>`).join(''); lines.push('','NOTAS',...N.map(s=>'- '+s));
+  lastText=lines.join('\n');
+  renderCost(R);
+  $('vfront').innerHTML=svgView(R,'front',false); $('vside').innerHTML=svgView(R,'side',false);
+  $('svgnote').textContent=`Cotas en ${IN()?'pulgadas':'mm'}.`;
+}
+function renderCost(R){
+  const C=R.cost, I=PR.ind, Tt=PR.tal;
+  const card=(title,who,q,rows)=>`<div class="quote"><h3>${title}</h3><span class="help">${who}</span><span class="big">${money(q.tot)}</span><span class="rng">Rango sugerido: ${money(q.lo)} a ${money(q.hi)}</span><table>${rows.map(([a,b])=>`<tr><td>${a}</td><td class="n r">${money(b)}</td></tr>`).join('')}</table></div>`;
+  $('quotes').innerHTML=card('Carpintero independiente','Taller chico, sin factura; cobra material más su tiempo.',C.ind,[[`Material y herrajes (+${I.merma}% merma)`,C.ind.dir],[`Mano de obra (${C.h} h × ${money(I.hora)})`,C.ind.mo],[`Utilidad (${I.util}%)`,C.ind.util],...(I.iva?[['IVA 16%',C.ind.iva]]:[])])
+    +card('Taller profesional','Con equipo, diseño, garantía y factura.',C.tal,[[`Material y herrajes (+${Tt.merma}% merma)`,C.tal.dir],[`Mano de obra (${C.h} h × ${money(Tt.hora)})`,C.tal.mo],[`Gastos del taller (${Tt.indirectos}%)`,C.tal.ind],[`Utilidad (${Tt.util}%)`,C.tal.util],...(Tt.iva?[['IVA 16%',C.tal.iva]]:[])]);
+  const tb=$('costTable').querySelector('tbody');
+  tb.innerHTML=C.lines.map(([a,b,c])=>`<tr><td>${a}</td><td>${b}</td><td class="n r">${money(c)}</td></tr>`).join('')+`<tr class="tot"><td>Costo directo</td><td>Sin mano de obra ni utilidad</td><td class="n r">${money(C.direct)}</td></tr>`;
+  $('costHelp').innerHTML=`Horas estimadas: ${C.h} (corte, armado, cajones, puertas y acabado${cfg.matKind==='maciza'?'; madera maciza ×1.5 por cepillado y ensambles':''}). Precios de material y tarifas son de referencia: ajústalos en “Precios de referencia” con tu maderería y tu zona. Referencias públicas 2026: carpintería en Culiacán con promedio de $8,725 por trabajo (de $3,950 a $13,500, <a href="https://www.habitissimo.com.mx/presupuesto/carpinteros/sinaloa/culiacan" target="_blank" rel="noopener">Habitissimo</a>); muebles a medida en México de $6,000 a $20,000 y mano de obra de $200 a $450 por hora (<a href="https://prummo.app/es-MX/guias/cuanto-cobra-un-carpintero" target="_blank" rel="noopener">Prummo</a>).`;
+}
+
+// ====================== Precios editables ======================
+function renderPrices(){
+  const sec=(t,html)=>`<div class="pgroup"><div class="seglbl">${t}</div><div class="prices">${html}</div></div>`;
+  const inp=(lab,path,step)=>{const v=path.split('.').reduce((o,k)=>o[k],PR); return `<label class="f">${lab}<input type="number" inputmode="decimal" step="${step||1}" data-p="${path}" value="${v}"></label>`;};
+  const chkP=(lab,path)=>{const v=path.split('.').reduce((o,k)=>o[k],PR); return `<label class="f chk"><input type="checkbox" data-pc="${path}" ${v?'checked':''}> ${lab}</label>`;};
+  let h='';
+  ['MDF','Triplay','Melamina'].forEach(m=>{h+=sec(`${m} · precio por hoja de 1.22 × 2.44`,Object.keys(PR[m]).map(e=>inp(`${e} mm`,`${m}.${e}`,10)).join(''));});
+  h+=sec('Madera maciza · precio por pie tabla',Object.keys(PR.maciza).map(s=>inp(SPECIES[s].n,`maciza.${s}`)).join('')+inp('Canto PVC por metro','canto'));
+  const HWL={rielSuave:'Riel cierre suave (juego)',rielNormal:'Riel normal (juego)',rielPush:'Riel push (juego)',bisagraSuave:'Bisagra cierre suave',bisagraNormal:'Bisagra normal',compas:'Compás o pistón',boton:'Jaladera botón',barra:'Jaladera barra',nivelador:'Pata niveladora',correa:'Correa antivuelco',pin:'Soporte de repisa',pasacables:'Tapa pasacables',colgador:'Herraje para colgar (par)',escuadra:'Escuadra',tornilleria:'Tornillería por mueble'};
+  h+=sec('Herrajes · precio por pieza',Object.keys(HWL).map(k=>inp(HWL[k],`hw.${k}`)).join(''));
+  h+=sec('Acabado · material por m² (la mano de obra va en las horas)',inp('Laca o pintura','fin.pintado',10)+inp('Sellador y barniz','fin.natural',10));
+  h+=sec('Carpintero independiente',inp('Tarifa por hora','ind.hora',10)+inp('Merma de material %','ind.merma')+inp('Utilidad %','ind.util')+chkP('Cobra con factura (IVA)','ind.iva'));
+  h+=sec('Taller profesional',inp('Tarifa por hora','tal.hora',10)+inp('Merma de material %','tal.merma')+inp('Gastos del taller %','tal.indirectos')+inp('Utilidad %','tal.util')+chkP('Cobra con factura (IVA)','tal.iva'));
+  h+=`<div class="actions"><button class="b" id="pricesReset">Volver a los precios de referencia</button></div><p class="help">Valores de partida: MDF 18 mm alrededor de $800 por hoja (publicado entre $480 y $900 en tiendas en línea), parota alrededor de $115 y encino alrededor de $135 por pie tabla; pino y cedro son estimados. Las tarifas por hora siguen el rango nacional de $200 a $450. Se guardan solo en este dispositivo.</p>`;
+  $('priceBody').innerHTML=h;
+  $('priceBody').querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('input',()=>{const v=parseFloat(el.value); if(!isFinite(v))return; const ks=el.dataset.p.split('.'); let o=PR; ks.slice(0,-1).forEach(k=>o=o[k]); o[ks[ks.length-1]]=v; savePR(); refreshCost();}));
+  $('priceBody').querySelectorAll('input[data-pc]').forEach(el=>el.onchange=()=>{const ks=el.dataset.pc.split('.'); PR[ks[0]][ks[1]]=el.checked; savePR(); refreshCost();});
+  $('pricesReset').onclick=()=>{PR=clone(PRICE_DEF); savePR(); renderPrices(); refreshCost();};
+}
+function refreshCost(){ if(!current) return; current.cost=costOf(current); renderCost(current); $('k-ind').textContent=money(current.cost.ind.tot); $('k-tal').textContent=money(current.cost.tal.tot); }
+
+// ====================== Planos (proyección de las piezas) ======================
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const PRINT={ink:'#1D2A2E',muted:'#5E6E72',line:'rgba(29,42,46,.14)',sheet:'#FAFBFB',dim:'#B4541A',accent:'#1F6F78'};
+const pal=print=>print?PRINT:{ink:css('--ink'),muted:css('--muted'),line:css('--line'),sheet:css('--sheet'),dim:css('--dim'),accent:css('--accent')};
+function dimH(x1,x2,y,txt,below){const o=below?40:0; return `<g class="dim"><line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}"/><line x1="${x1}" y1="${y-9}" x2="${x1}" y2="${y+9}"/><line x1="${x2}" y1="${y-9}" x2="${x2}" y2="${y+9}"/><text x="${(x1+x2)/2}" y="${y-9+o}" text-anchor="middle">${txt}</text></g>`;}
+function dimV(x,y1,y2,txt,side){const s=side==='l'?-1:1; return `<g class="dim"><line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/><line x1="${x-9}" y1="${y1}" x2="${x+9}" y2="${y1}"/><line x1="${x-9}" y1="${y2}" x2="${x+9}" y2="${y2}"/><text x="${x+s*12}" y="${(y1+y2)/2+9}" text-anchor="${s<0?'end':'start'}">${txt}</text></g>`;}
+function svgView(R,view,print){
+  const p=pal(print), front=view==='front';
+  const all=R.pieces.flatMap(q=>q.boxes.map(b=>({b,q})));
+  const minX=Math.min(...all.map(o=>front?o.b.x:o.b.z)), maxX=Math.max(...all.map(o=>front?o.b.x+o.b.w:o.b.z+o.b.d)), maxY=Math.max(...all.map(o=>o.b.y+o.b.h));
+  const s=Math.min(1,1400/Math.max(maxX-minX,maxY)), pad=120, VW=(maxX-minX)*s+pad+300, VH=maxY*s+260;
+  const X=v=>pad+(v-minX)*s, Y=v=>VH-150-v*s;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VW} ${VH}" width="${VW}" height="${VH}" role="img" aria-label="${front?'Alzado':'Corte lateral'} con medidas"><style>text{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}.dim line{stroke:${p.dim};stroke-width:1.8}.dim text{fill:${p.dim};font-size:26px;font-weight:500}.lbl{fill:${p.muted};font-size:23px}.pc{stroke:${p.ink};stroke-width:2}.fr{fill:${p.sheet}}.in{fill:${p.line}}.tp{fill:${p.line};stroke-width:2.4}</style>`;
+  if(print) svg+=`<rect width="${VW}" height="${VH}" fill="#fff"/>`;
+  svg+=`<line x1="${X(minX)-60}" y1="${Y(0)}" x2="${X(maxX)+60}" y2="${Y(0)}" stroke="${p.ink}" stroke-width="2.6"/>`;
+  let list=all;
+  if(!front){ const xc=(R.fronts[0]?R.fronts[0].x+R.fronts[0].w/2:R.W/2); list=all.filter(o=>o.b.x<=xc&&o.b.x+o.b.w>=xc||o.q.role==='side'&&o.q.name.startsWith('Lateral')&&false); }
+  list.sort((a,b)=>front?(a.b.z+a.b.d)-(b.b.z+b.b.d):(a.b.x)-(b.b.x));
+  list.forEach(({b,q})=>{const x=front?b.x:b.z, w=front?b.w:b.d; const cls=q.role==='front'?'fr':q.role==='top'?'tp':'in';
+    svg+=`<rect class="pc ${cls}" x="${X(x)}" y="${Y(b.y+b.h)}" width="${Math.max(1,w*s)}" height="${Math.max(1,b.h*s)}"/>`;});
+  const totW=maxX-minX;
+  svg+=dimH(X(minX),X(maxX),Y(maxY)-40,`${L(totW)}`);
+  svg+=dimV(X(maxX)+60,Y(0),Y(maxY),L(maxY));
+  if(front){ const col0=R.fronts.filter(f=>f.col===0&&!f.open).sort((a,b)=>b.y-a.y); col0.forEach(f=>svg+=dimV(X(maxX)+170,Y(f.y),Y(f.y+f.h),L(f.h)));
+    const xs=[...new Set(R.fronts.map(f=>f.col))]; if(xs.length>1){ const firstRow={}; R.fronts.forEach(f=>{if(!firstRow[f.col]||f.y<firstRow[f.col].y) firstRow[f.col]=f;}); Object.values(firstRow).forEach(f=>svg+=dimH(X(f.x),X(f.x+f.w),Y(0)+50,L(f.w),true)); } }
+  svg+=`<text class="lbl" x="${pad-60}" y="${VH-14}">${front?'Alzado frontal':'Corte por el centro de la primera columna'} · ${IN()?'pulgadas':'mm'}</text></svg>`;
+  return svg;
+}
+
+// ====================== Tono de madera ======================
+const WOODS=[['Maple','#E6CDA6'],['Pino','#E0BC8C'],['Encino claro','#CDA77E'],['Roble','#B98A5C'],['Teca','#A0703F'],['Cedro','#B4704A'],['Parota','#9A6A45'],['Cerezo','#9C5A3A'],['Caoba','#7C3E2A'],['Nogal','#7E5639'],['Wengué','#4A3427'],['Ébano','#2D241F']];
+const NEUTRALS=[['Blanco puro','#F7F7F5'],['Blanco cálido','#F3EEE4'],['Blanco perla','#F3EFE7'],['Hueso','#EDE4D3'],['Blanqueado','#E8DFD2'],['Greige claro','#D9D2C5'],['Greige','#BDB4A6'],['Gris ceniza','#A9A196'],['Gris claro frío','#D3D6D8'],['Gris medio','#A7AAAD'],['Gris cálido','#A69F96'],['Gris oscuro','#6E6F70'],['Grafito','#45474A'],['Carbón','#2E2C2B']];
+const hsl2hex=(h,s,l)=>{const a=s*Math.min(l,1-l), f=n=>{const k=(n+h/30)%12; return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))).toString(16).padStart(2,'0');}; return '#'+f(0)+f(8)+f(4);};
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255);
+function hex2hsl(h){const [r,g,b]=hex2rgb(h), mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, d=mx-mn; let hh=0, ss=0; if(d){ss=d/(1-Math.abs(2*l-1)); hh=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4; hh*=60; if(hh<0) hh+=360;} return [hh,ss,l];}
+function mapColor(x,y){const L_=0.93-0.8*x, red=15+12*(1-x), hue=y<0.45?34:34-(34-red)*(y-0.45)/0.55; let sat=y<0.45?0.03+0.29*(y/0.45):0.32+0.08*(y-0.45)/0.55; sat*=1-0.5*Math.pow((L_-0.55)/0.42,2); return hsl2hex(hue,Math.max(0,sat),L_);}
+function woodName(hex){const f=[...WOODS,...NEUTRALS].find(w=>w[1].toLowerCase()===hex.toLowerCase()); return f?f[0]:'Tono personalizado';}
+function grainOf(hex){const [h,s,l]=hex2hsl(hex); return l<0.24?hsl2hex(h,Math.min(1,s+0.05),Math.min(1,l+0.08)):hsl2hex(h,Math.min(1,s+0.06),Math.max(0,l-0.17));}
+const texCache={};
+function woodTex(hex){
+  if(texCache[hex]) return texCache[hex];
+  if(Object.keys(texCache).length>16){Object.values(texCache).forEach(t=>t.dispose()); for(const k in texCache) delete texCache[k];}
+  const b=grainOf(hex), cv=document.createElement('canvas'); cv.width=1024; cv.height=256; const g=cv.getContext('2d');
+  g.fillStyle=hex; g.fillRect(0,0,1024,256);
+  let seed=990; const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
+  for(let i=0;i<90;i++){const y0=rnd()*256, amp=2+rnd()*7, f=0.002+rnd()*0.006, ph=rnd()*6.28, w=0.6+rnd()*2.2;
+    g.strokeStyle=b; g.globalAlpha=0.08+rnd()*0.22; g.lineWidth=w; g.beginPath();
+    for(let x=0;x<=1024;x+=8){const y=y0+amp*Math.sin(x*f+ph)+2*Math.sin(x*f*5+ph*2); x?g.lineTo(x,y):g.moveTo(x,y);} g.stroke();}
+  g.globalAlpha=0.12; g.fillStyle=b; for(let i=0;i<1600;i++) g.fillRect(rnd()*1024,rnd()*256,4+rnd()*10,0.8);
+  g.globalAlpha=1;
+  const t=new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.encoding=THREE.sRGBEncoding;
+  return texCache[hex]=t;
+}
+function drawWoodMap(){const c=$('wpMap'), g=c.getContext('2d'), W=c.width, H=c.height, img=g.createImageData(W,H);
+  for(let j=0;j<H;j++)for(let i=0;i<W;i++){const [r,gg,b]=hex2rgb(mapColor(i/(W-1),j/(H-1))), k=(j*W+i)*4; img.data[k]=r*255; img.data[k+1]=gg*255; img.data[k+2]=b*255; img.data[k+3]=255;} g.putImageData(img,0,0);}
+function chips(el,list){el.innerHTML=''; list.forEach(([n,h])=>{const b=document.createElement('button'); b.type='button'; b.className='wpchip'; b.dataset.hex=h; b.innerHTML=`<i style="background:${h}"></i>${n}`; b.onclick=()=>setWood(h,null,true); el.appendChild(b);});}
+function syncWood(){const h=cfg.woodHex; $('wpSw').style.background=h; $('wpName').textContent=woodName(h); $('wpHex').textContent=h.toUpperCase();
+  document.querySelectorAll('.wpchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hex.toLowerCase()===h.toLowerCase())));
+  const dot=$('wpDot'), c=$('wpMap'); if(cfg.woodXY&&c.clientWidth){dot.hidden=false; dot.style.left=(c.offsetLeft+cfg.woodXY[0]*c.clientWidth)+'px'; dot.style.top=(c.offsetTop+cfg.woodXY[1]*c.clientHeight)+'px'; dot.style.background=h;} else dot.hidden=true;}
+function setWood(hex,xy,commit){cfg.woodHex=hex; cfg.woodXY=xy||null; syncWood(); if(commit){ if(cfg.fin!=='natural'&&cfg.finTop!=='natural'){cfg.fin='natural'; $('f-fin').value='natural';} update(); }}
+(function(){ chips($('wpWoods'),WOODS); chips($('wpNeutrals'),NEUTRALS); drawWoodMap();
+  const c=$('wpMap'); let drag=false; const at=e=>{const r=c.getBoundingClientRect(); return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))];};
+  c.addEventListener('pointerdown',e=>{drag=true; c.setPointerCapture(e.pointerId); const p=at(e); setWood(mapColor(...p),p,false);});
+  c.addEventListener('pointermove',e=>{if(!drag)return; const p=at(e); setWood(mapColor(...p),p,false);});
+  const end=()=>{if(!drag)return; drag=false; setWood(cfg.woodHex,cfg.woodXY,true);}; c.addEventListener('pointerup',end); c.addEventListener('pointercancel',end);
+  c.addEventListener('keydown',e=>{const d={ArrowLeft:[-.04,0],ArrowRight:[.04,0],ArrowUp:[0,-.06],ArrowDown:[0,.06]}[e.key]; if(!d)return; e.preventDefault(); const p=cfg.woodXY||[0.4,0.45], q=[Math.min(1,Math.max(0,p[0]+d[0])),Math.min(1,Math.max(0,p[1]+d[1]))]; setWood(mapColor(...q),q,true);});
+  new ResizeObserver(syncWood).observe(c); })();
+
+// ====================== 3D ======================
+let T3=null, mode='armado', matCache={};
+function finishOf(role){ if(role==='top') return cfg.finTop==='igual'?cfg.fin:cfg.finTop; if(role==='front'||role==='side') return cfg.fin; return 'in'; }
+function matFor(q,bx){
+  const melam=cfg.matKind==='tablero'&&cfg.tablero==='Melamina';
+  let fin=finishOf(q.role); if(q.mat==='leg') fin=cfg.matKind==='maciza'?'natural':cfg.fin;
+  if(fin==='in') return matCache.in||(matCache.in=new THREE.MeshStandardMaterial({color:cfg.matKind==='maciza'?SPECIES[cfg.species].hex:(cfg.tablero==='Triplay'?0xE2C9A0:melam?cfg.colF:0xE6DFD3),roughness:0.85}));
+  if(fin==='pintado'){const k='p'+cfg.colF; return matCache[k]||(matCache[k]=new THREE.MeshStandardMaterial({color:cfg.colF,roughness:melam?0.4:0.55}));}
+  if(!cfg.veta){const k='w'+cfg.woodHex; return matCache[k]||(matCache[k]=new THREE.MeshStandardMaterial({color:cfg.woodHex,roughness:0.5}));}
+  const dims={x:bx.w,y:bx.h,z:bx.d}, thin=Object.keys(dims).reduce((a,k)=>dims[k]<dims[a]?k:a,'x'), [u,v]=thin==='x'?['z','y']:thin==='y'?['x','z']:['x','y'];
+  const tx=woodTex(cfg.woodHex).clone(); tx.needsUpdate=true; tx.center.set(.5,.5);
+  if(q.grain===v){tx.rotation=Math.PI/2; tx.repeat.set(dims[u]/300,dims[v]/1200);} else tx.repeat.set(dims[u]/1200,dims[v]/300);
+  tx.offset.set((bx.x*0.37+bx.y*0.11)%1,(bx.z*0.23)%1);
+  return new THREE.MeshStandardMaterial({map:tx,roughness:0.5});
+}
+function init3D(){
+  if(!window.THREE){$('v3d').innerHTML='<p class="help" style="padding:16px">No se pudo cargar el visor 3D.</p>'; return;}
+  const el=$('v3d'), renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.8;
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.physicallyCorrectLights=true; el.appendChild(renderer.domElement);
+  const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(40,1,0.02,60), ctl=new THREE.OrbitControls(cam,renderer.domElement);
+  ctl.enableDamping=true; ctl.screenSpacePanning=true; ctl.minDistance=0.3; ctl.maxDistance=12;
+  scene.add(new THREE.HemisphereLight(0xfff7ec,0xa89c8b,0.95));
+  const sun=new THREE.DirectionalLight(0xfff3e4,2.2); sun.position.set(2,3,3); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+  Object.assign(sun.shadow.camera,{left:-3,right:3,top:3,bottom:-1,near:0.5,far:12}); sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.02; scene.add(sun,sun.target);
+  const env=new THREE.Group(), asm=new THREE.Group(), ex=new THREE.Group(); scene.add(env,asm,ex);
+  const sel=new THREE.BoxHelper(undefined,0xB4541A); sel.visible=false; sel.material.depthTest=false; sel.renderOrder=30; scene.add(sel);
+  T3={renderer,scene,cam,ctl,sun,env,asm,ex,sel,movs:[],exParts:[],selObj:null};
+  new ResizeObserver(()=>{const w=el.clientWidth,h=el.clientHeight; if(!w||!h)return; renderer.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix();}).observe(el);
+  const ray=new THREE.Raycaster(), v=new THREE.Vector2(); let down=null;
+  el.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};});
+  el.addEventListener('pointerup',e=>{ if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>8){down=null;return;} down=null;
+    const r=el.getBoundingClientRect(); v.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1); ray.setFromCamera(v,cam);
+    if(mode==='armado'){const h=ray.intersectObjects(T3.movs.map(m=>m.g),true)[0]; if(!h)return; let o=h.object; while(o&&!o.userData.mv) o=o.parent; if(o){o.userData.mv.t=o.userData.mv.t>0.5?0:1; syncOpen();}}
+    else{const h=ray.intersectObjects(T3.exParts.map(p=>p.g),true).find(h=>h.object.type==='Mesh'); if(!h){pick(null);return;} let o=h.object; while(o&&!o.userData.piece) o=o.parent; pick(o?o.userData.piece:null);} });
+  let last=performance.now();
+  (function loop(now){const dt=Math.min(0.05,(now-last)/1000); last=now;
+    T3.movs.forEach(m=>{if(Math.abs(m.v-m.t)>1e-3){m.v+=Math.sign(m.t-m.v)*Math.min(Math.abs(m.t-m.v),dt*2.2); applyMov(m);}});
+    if(T3.sel.visible&&T3.selObj) T3.sel.setFromObject(T3.selObj);
+    ctl.update(); renderer.render(scene,cam); requestAnimationFrame(loop);})(last);
+}
+const K=0.001;
+function applyMov(m){const k=m.v<.5?2*m.v*m.v:1-Math.pow(-2*m.v+2,2)/2; if(m.kind==='drawer') m.g.position.z=m.open*K*k; else if(m.kind==='door') m.g.rotation.y=m.dir*rad(100)*k; else m.g.rotation.x=rad(80)*k;}
+const rad=d=>d*Math.PI/180;
+function meshBox(b,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(b.w*K,b.h*K,b.d*K),mat); m.position.set((b.x+b.w/2)*K,(b.y+b.h/2)*K,(b.z+b.d/2)*K); m.castShadow=true; m.receiveShadow=true; return m;}
+function labelSprite(text){const c=document.createElement('canvas'); c.width=128; c.height=56; const g=c.getContext('2d'); g.fillStyle='rgba(29,42,46,.88)'; g.beginPath(); if(g.roundRect) g.roundRect(2,2,124,52,26); else g.rect(2,2,124,52); g.fill();
+  g.fillStyle='#FFFFFF'; g.font='600 30px "IBM Plex Mono", monospace'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(text,64,30);
+  const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true})); s.scale.set(0.052,0.023,1); s.renderOrder=20; s.userData.label=true; return s;}
+function clearGroup(g){g.traverse(o=>{if(o.geometry) o.geometry.dispose(); if(o.material&&!Object.values(matCache).includes(o.material)){if(o.material.map&&!Object.values(texCache).includes(o.material.map)) o.material.map.dispose(); o.material.dispose();}}); g.clear();}
+function build3D(R){
+  if(!T3) return; const prev=T3.movs.map(m=>m.t);
+  [T3.env,T3.asm,T3.ex].forEach(clearGroup); T3.movs=[]; T3.exParts=[]; T3.selObj=null; T3.sel.visible=false;
+  const M=(c,r)=>new THREE.MeshStandardMaterial({color:c,roughness:r}), Wm=R.W*K;
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(6,4),M(0xE2E2DF,0.4)); floor.rotation.x=-Math.PI/2; floor.position.set(Wm/2,0,1.5); floor.receiveShadow=true; T3.env.add(floor);
+  const wall=new THREE.Mesh(new THREE.PlaneGeometry(6,3),M(0xEDEAE4,0.9)); wall.position.set(Wm/2,1.5,-0.002); wall.receiveShadow=true; T3.env.add(wall);
+  const groups=R.mov.map((m,i)=>{const g=new THREE.Group(), mv=Object.assign({g,t:prev[i]||0,v:prev[i]||0},m);
+    if(m.kind==='door') g.position.set(m.px*K,0,m.pz*K); else if(m.kind==='flap') g.position.set(0,m.py*K,m.pz*K);
+    g.userData.mv=mv; T3.asm.add(g); T3.movs.push(mv); return g;});
+  const metal=new THREE.MeshStandardMaterial({color:0xBFC3C6,roughness:0.3,metalness:0.85});
+  R.pieces.forEach(q=>{
+    const parent=q.mov!=null?groups[q.mov]:T3.asm, mv=q.mov!=null?R.mov[q.mov]:null;
+    q.boxes.forEach(b=>{const m=meshBox(b,matFor(q,b)); if(mv&&mv.kind==='door') m.position.sub(new THREE.Vector3(mv.px*K,0,mv.pz*K)); if(mv&&mv.kind==='flap') m.position.sub(new THREE.Vector3(0,mv.py*K,mv.pz*K)); parent.add(m);});
+    const g=new THREE.Group(); q.boxes.forEach(b=>{const m=meshBox(b,matFor(q,b)); m.castShadow=false; g.add(m);}); g.userData.piece=q;
+    const cen=new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3()); const lab=labelSprite(q.id); lab.position.copy(cen); g.add(lab);
+    T3.ex.add(g); T3.exParts.push({g,q,off:new THREE.Vector3(...q.ex).multiplyScalar(K)});
+  });
+  if(cfg.slide!=='push'&&cfg.pull!=='ninguna') R.pieces.filter(q=>q.role==='front'&&q.mov!=null).forEach(q=>{const b=q.boxes[0], mv=R.mov[q.mov], g=groups[q.mov];
+    let x=b.x+b.w/2, y=b.y+b.h-Math.min(b.h/2,90);
+    if(mv.kind==='door'){x=mv.dir<0?b.x+b.w-40:b.x+40; y=b.y+b.h/2;} if(mv.kind==='flap'){y=b.y+b.h-40;}
+    const knob=cfg.pull==='boton'?new THREE.Mesh(new THREE.SphereGeometry(0.014,18,12),metal):new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.15,14),metal);
+    if(cfg.pull==='barra'){ if(mv.kind==='door') {} else knob.rotation.z=Math.PI/2; }
+    knob.position.set(x*K,y*K,(b.z+b.d+12)*K); if(mv.kind==='door') knob.position.sub(new THREE.Vector3(mv.px*K,0,mv.pz*K)); if(mv.kind==='flap') knob.position.sub(new THREE.Vector3(0,mv.py*K,mv.pz*K)); knob.castShadow=true; g.add(knob);});
+  T3.movs.forEach(applyMov);
+  T3.sun.target.position.set(Wm/2,R.H*K/2,0); T3.scene.background=new THREE.Color(css('--paper'));
+  applyExplode(); applyMode(); syncOpen();
+}
+function applyExplode(){if(!T3)return; const f=+$('exf').value/100; T3.exParts.forEach(e=>e.g.position.copy(e.off).multiplyScalar(f)); const on=$('exLabels').checked; T3.ex.traverse(o=>{if(o.userData.label) o.visible=on;});}
+function applyMode(){if(!T3)return; const ex=mode==='explosion'; T3.ex.visible=ex; T3.asm.visible=!ex; T3.env.visible=!ex; T3.sel.visible=ex&&!!T3.selObj;}
+function fitExplosion(){if(!T3)return; const bb=new THREE.Box3(); T3.exParts.forEach(e=>bb.expandByObject(e.g)); if(bb.isEmpty())return; const c=bb.getCenter(new THREE.Vector3()), s=bb.getSize(new THREE.Vector3()).length(); T3.ctl.target.copy(c); T3.cam.position.copy(c).add(new THREE.Vector3(0.75,0.55,1).normalize().multiplyScalar(s*1.05)); T3.ctl.update();}
+function setView(v){if(!T3||!current)return; const W=current.W*K, H=current.H*K, D=current.D*K, sz=Math.max(W,H,0.7), t=new THREE.Vector3(W/2,H*0.45,D/2), dist=sz*0.85/Math.tan(rad(20))*(T3.cam.aspect<1?1.4:1);
+  const dir=v==='front'?new THREE.Vector3(0,0.12,1):new THREE.Vector3(0.62,0.42,1); T3.cam.position.copy(t).add(dir.normalize().multiplyScalar(dist)); T3.ctl.target.copy(t); T3.ctl.update();}
+function pick(q){ if(!T3)return; document.querySelectorAll('#cut tr.pick').forEach(tr=>tr.classList.remove('pick'));
+  if(!q){T3.selObj=null; T3.sel.visible=false; $('pinfo').textContent='Toca una pieza para ver su clave y medidas.'; return;}
+  const e=T3.exParts.find(x=>x.q===q); T3.selObj=e?e.g:null; T3.sel.visible=!!T3.selObj; const rw=current.rows.find(r=>r.id===q.id);
+  $('pinfo').innerHTML=`<b>${q.id}</b> · ${q.name} · ${L(rw.A)} × ${L(rw.B)} ${UL()} · grueso ${LU(q.e)} · ${matLabel(rw)} · ${rw.q} pieza${rw.q>1?'s iguales':''}`;
+  const tr=document.querySelector(`#cut tr[data-id="${q.id}"]`); if(tr) tr.classList.add('pick'); }
+function syncOpen(){if(!T3)return; $('openAll').textContent=T3.movs.some(m=>m.t>0.5)?'Cerrar todo':'Abrir todo';}
+$('openAll').onclick=()=>{if(!T3)return; const any=T3.movs.some(m=>m.t>0.5); T3.movs.forEach(m=>m.t=any?0:1); syncOpen();};
+$('viewFront').onclick=()=>setView('front'); $('viewIso').onclick=()=>setView('iso');
+$('exf').addEventListener('input',applyExplode); $('exLabels').addEventListener('change',applyExplode); $('exFit').onclick=fitExplosion;
+function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===id))); const is3=id==='armado'||id==='explosion';
+  $('v3d').hidden=!is3; $('vfront').hidden=id!=='vfront'; $('vside').hidden=id!=='vside'; $('bar-armado').hidden=id!=='armado'; $('bar-ex').hidden=id!=='explosion'; $('bar-svg').hidden=is3;
+  if(is3){const prev=mode; mode=id; applyMode(); if(prev!==mode){ if(mode==='explosion') fitExplosion(); else setView('iso'); }}}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>selectTab(b.dataset.tab));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(cfg.type) update(false);});
+
+// ====================== PDF ======================
+const pdfSafe=s=>String(s).replace(/[–—−]/g,'-').replace(/≈/g,'aprox.').replace(/[“”]/g,'"').replace(/·/g,'-').replace(/²/g,'2').replace(/→/g,'->');
+function snap3D(which,w,h){const {renderer,cam,ctl,scene}=T3, prev={mode,pos:cam.position.clone(),tgt:ctl.target.clone(),asp:cam.aspect,size:renderer.getSize(new THREE.Vector2()),pr:renderer.getPixelRatio(),bg:scene.background};
+  mode=which; applyMode(); if(which==='explosion'){applyExplode(); fitExplosion();} else setView('iso');
+  renderer.setPixelRatio(1); renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); scene.background=new THREE.Color('#FFFFFF'); T3.sel.visible=false;
+  renderer.render(scene,cam); const url=renderer.domElement.toDataURL('image/jpeg',0.9);
+  scene.background=prev.bg; renderer.setPixelRatio(prev.pr); renderer.setSize(prev.size.x,prev.size.y); cam.aspect=prev.asp; cam.updateProjectionMatrix(); cam.position.copy(prev.pos); ctl.target.copy(prev.tgt); ctl.update(); mode=prev.mode; applyMode(); return url;}
+function svgToJpg(svg,w){return new Promise((res,rej)=>{const vb=svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/), W=+vb[1], H=+vb[2], s=w/W; const img=new Image();
+  img.onload=()=>{const c=document.createElement('canvas'); c.width=Math.round(W*s); c.height=Math.round(H*s); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(img,0,0,c.width,c.height); res({url:c.toDataURL('image/jpeg',0.9),ratio:H/W});};
+  img.onerror=()=>rej(new Error('no se pudo dibujar el plano')); img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);});}
+async function buildPdf(withCost){
+  const R=current, t=TYPES[cfg.type], {jsPDF}=window.jspdf, doc=new jsPDF({unit:'mm',format:'a4',compress:true}), PW=210, M=12, imgW=PW-2*M;
+  const head=(a,b)=>{doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(29,42,46); doc.text(pdfSafe(a),M,16); doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(94,110,114); if(b) doc.text(pdfSafe(b),M,22);};
+  const date=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+  head(`${t.name} a medida - hoja de fabricación`,`${date} · medidas en ${IN()?'pulgadas':'mm'} · ${matLabel({mat:'main',e:R.T})}`);
+  doc.setTextColor(29,42,46); doc.setFontSize(10.5);
+  [`Medida total: ${LK(R.W)} de ancho x ${LK(R.H)} de alto x ${LK(R.D)} de fondo`,`Piezas: ${R.rows.reduce((a,r)=>a+r.q,0)} · cajones: ${R.count.drawers} · puertas: ${R.count.doors+R.count.flaps}`,`Acabado: ${cfg.fin==='pintado'?'pintado':'madera natural, tono '+woodName(cfg.woodHex)}`].forEach((f,i)=>doc.text(pdfSafe(f),M,31+i*5.5));
+  const a3h=imgW*1000/1400; doc.addImage(snap3D('armado',1400,1000),'JPEG',M,50,imgW,a3h);
+  const fr=await svgToJpg(svgView(R,'front',true),1400); const fh=Math.min(297-50-a3h-14,imgW*fr.ratio), fw=fh/fr.ratio; doc.addImage(fr.url,'JPEG',(PW-fw)/2,50+a3h+4,fw,fh);
+  doc.addPage(); head('Explosión del mueble','Cada pieza lleva su clave; búscala en el despiece.');
+  const e3h=imgW*1100/1400; doc.addImage(snap3D('explosion',1400,1100),'JPEG',M,28,imgW,e3h);
+  const sd=await svgToJpg(svgView(R,'side',true),1200); const sh=Math.min(297-28-e3h-14,imgW*sd.ratio), sw=sh/sd.ratio; doc.addImage(sd.url,'JPEG',(PW-sw)/2,28+e3h+4,sw,sh);
+  doc.addPage(); head('Despiece',`Medidas de corte en ${IN()?'pulgadas':'mm'}, sin descontar canto.`);
+  const body=[]; let g='';
+  R.rows.forEach(rw=>{ if(rw.grp!==g){g=rw.grp; body.push([{content:g.toUpperCase(),colSpan:7,styles:{fontStyle:'bold',textColor:[31,111,120],fillColor:[238,241,241]}}]);}
+    body.push([rw.id,rw.name,String(rw.q),`${L(rw.A)} x ${L(rw.B)}`,LU(rw.e),matLabel(rw),rw.note].map(pdfSafe)); });
+  doc.autoTable({startY:27,head:[['Clave','Pieza','Cant.','Largo x ancho','Grueso','Material','Notas']],body,margin:{left:M,right:M},styles:{fontSize:8,cellPadding:1.6,valign:'top'},headStyles:{fillColor:[29,42,46]},columnStyles:{0:{cellWidth:11},2:{cellWidth:10,halign:'center'},3:{cellWidth:24},4:{cellWidth:14},5:{cellWidth:26}}});
+  let y=doc.lastAutoTable.finalY+8; if(y>250){doc.addPage(); y=20;}
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(29,42,46); doc.text('Herrajes',M,y);
+  doc.autoTable({startY:y+3,head:[['Herraje','Cant.','Qué pedir']],body:hardware(R).map(r=>[r[0],String(r[1]),r[2]].map(pdfSafe)),margin:{left:M,right:M},styles:{fontSize:8.5,cellPadding:1.6},headStyles:{fillColor:[29,42,46]},columnStyles:{1:{cellWidth:12,halign:'center'}}});
+  y=doc.lastAutoTable.finalY+8; if(y>240){doc.addPage(); y=20;}
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Notas para el carpintero',M,y); y+=6; doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+  notes(R).forEach(n=>{const ls=doc.splitTextToSize('- '+pdfSafe(n),PW-2*M); if(y+ls.length*4.6>285){doc.addPage(); y=20;} doc.text(ls,M,y); y+=ls.length*4.6+1.5;});
+  if(withCost){ const C=R.cost; doc.addPage(); head('Costo y precio sugerido','Referencia para Sinaloa; ajusta precios con tu maderería.');
+    doc.autoTable({startY:27,head:[['Concepto','Detalle','Costo']],body:[...C.lines.map(([a,b,c])=>[a,b,money(c)]),['Costo directo','Sin mano de obra ni utilidad',money(C.direct)]].map(r=>r.map(pdfSafe)),margin:{left:M,right:M},styles:{fontSize:8.5,cellPadding:1.6},headStyles:{fillColor:[29,42,46]},columnStyles:{2:{halign:'right',cellWidth:26}}});
+    y=doc.lastAutoTable.finalY+8;
+    const I=PR.ind, Tt=PR.tal;
+    doc.autoTable({startY:y,head:[['','Carpintero independiente','Taller profesional']],body:[
+      ['Material y herrajes con merma',money(C.ind.dir),money(C.tal.dir)],[`Mano de obra (${C.h} h)`,`${money(C.ind.mo)} (${money(I.hora)}/h)`,`${money(C.tal.mo)} (${money(Tt.hora)}/h)`],['Gastos del taller','-',money(C.tal.ind)],['Utilidad',money(C.ind.util),money(C.tal.util)],['IVA',I.iva?money(C.ind.iva):'-',Tt.iva?money(C.tal.iva):'-'],
+      ['Precio sugerido',money(C.ind.tot),money(C.tal.tot)],['Rango',`${money(C.ind.lo)} a ${money(C.ind.hi)}`,`${money(C.tal.lo)} a ${money(C.tal.hi)}`]].map(r=>r.map(pdfSafe)),margin:{left:M,right:M},styles:{fontSize:9,cellPadding:2},headStyles:{fillColor:[29,42,46]},columnStyles:{1:{halign:'right'},2:{halign:'right'}}}); }
+  const pages=doc.getNumberOfPages(); for(let i=1;i<=pages;i++){doc.setPage(i); doc.setFontSize(8); doc.setTextColor(94,110,114); doc.text(pdfSafe(`${t.name} a medida - página ${i} de ${pages}`),PW-M,290,{align:'right'});}
+  return doc;
+}
+window.__buildPdf=buildPdf;
+$('pdfBtn').onclick=async()=>{const btn=$('pdfBtn'); if(!window.jspdf||!T3){showPdfMsg('No se pudo cargar el generador de PDF. Revisa tu conexión.'); return;}
+  btn.disabled=true; btn.textContent='Generando…';
+  try{const doc=await buildPdf($('pdfCost').checked); const name=`${TYPES[cfg.type].name.toLowerCase().replace(/\s+/g,'-').normalize('NFD').replace(/[̀-ͯ]/g,'')}-despiece.pdf`; doc.save(name);
+    showPdfMsg(`PDF listo: ${name}, ${doc.getNumberOfPages()} páginas. Si no se descargó, abre la herramienta desde GitHub o en el navegador.`);}
+  catch(err){showPdfMsg('No se pudo generar el PDF: '+err.message);}
+  btn.disabled=false; btn.textContent='Generar PDF';};
+function showPdfMsg(t){const m=$('pdfMsg'); m.hidden=false; m.textContent=t; m.closest('details').open=true; m.scrollIntoView({block:'nearest'});}
+
+// ====================== Acciones ======================
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(lastText); $('copy').textContent='Despiece copiado'; setTimeout(()=>$('copy').textContent='Copiar despiece',1800);}catch(e){const b=$('copyBox'); b.hidden=false; b.value=lastText; b.focus(); b.select();}};
+let arm=0; $('reset').onclick=()=>{if(Date.now()-arm>3000){arm=Date.now(); $('reset').textContent='Toca otra vez para restablecer'; setTimeout(()=>$('reset').textContent='Restablecer este mueble',3000); return;}
+  cfg.p[cfg.type]=clone(TYPES[cfg.type].def); $('reset').textContent='Restablecer este mueble'; update();};
+
+// ====================== Guardar y abrir ======================
+const SAVES='muebles.guardadas.v1';
+const PAGE=/github\.io$/.test(location.hostname)?location.origin+location.pathname:'https://ingarmandotirado.github.io/Carpinteria/muebles/';
+let curName='';
+const loadSaves=()=>{try{const a=JSON.parse(localStorage.getItem(SAVES)||'[]'); return Array.isArray(a)?a:[];}catch(e){return [];}};
+const storeSaves=a=>{try{localStorage.setItem(SAVES,JSON.stringify(a)); return true;}catch(e){return false;}};
+function snapshot(){const o={type:cfg.type,p:cfg.p[cfg.type]}; ['matKind','tablero','tT','species','tM','boxMat','fin','finTop','colF','woodHex','veta','gap','slide','pull'].forEach(k=>o[k]=cfg[k]); return o;}
+const b64e=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+const linkFor=(name,conf)=>PAGE+'?c='+b64e(JSON.stringify({n:name,c:conf}));
+function applySnap(o,name){ if(!o||!TYPES[o.type]) return false;
+  Object.keys(o).forEach(k=>{if(k==='p') cfg.p[o.type]=Object.assign(clone(TYPES[o.type].def),o.p); else if(k!=='type') cfg[k]=o[k];}); cfg.type=o.type;
+  $('f-veta').checked=!!cfg.veta; curName=name||''; $('saveName').value=curName; $('curName').textContent=curName?`Abierto: ${curName}`:''; showTool(); update(); setView('iso'); return true; }
+function saveMsg(t){$('saveMsg').textContent=t;}
+async function copyLink(url,label){try{await navigator.clipboard.writeText(url); saveMsg(`Enlace de “${label}” copiado.`); $('linkBox').hidden=true;}catch(e){const b=$('linkBox'); b.hidden=false; b.value=url; b.focus(); b.select(); saveMsg('Copia el enlace del cuadro de abajo.');}}
+const fmtDate=t=>{try{return new Date(t).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});}catch(e){return '';}};
+function li(name,sub,actions){const el=document.createElement('li'); const n=document.createElement('span'); n.className='nm'; n.textContent=name; el.appendChild(n);
+  if(sub){const d=document.createElement('span'); d.className='dt'; d.textContent=sub; el.appendChild(d);}
+  actions.forEach(([lab,fn])=>{const b=document.createElement('button'); b.className='b'; b.type='button'; b.textContent=lab; b.onclick=()=>fn(b); el.appendChild(b);}); return el;}
+function renderSaves(){const ul=$('localList'); ul.innerHTML=''; const a=loadSaves();
+  if(!a.length){const e=document.createElement('li'); e.className='empty'; e.textContent='Todavía no hay muebles guardados aquí. Escribe un nombre arriba y toca Guardar.'; ul.appendChild(e);}
+  a.slice().sort((x,y)=>y.t-x.t).forEach(sv=>ul.appendChild(li(sv.n,`${TYPES[sv.c.type]?TYPES[sv.c.type].name:''} · ${fmtDate(sv.t)}`,[
+    ['Abrir',()=>{applySnap(sv.c,sv.n); saveMsg(`Abriste “${sv.n}”.`);}],['Enlace',()=>copyLink(linkFor(sv.n,sv.c),sv.n)],
+    ['Borrar',b=>{if(b.dataset.arm!=='1'){b.dataset.arm='1'; b.textContent='¿Borrar?'; setTimeout(()=>{b.dataset.arm=''; b.textContent='Borrar';},3000); return;} storeSaves(loadSaves().filter(x=>x.n!==sv.n)); renderSaves(); saveMsg(`Borraste “${sv.n}”.`);}]])));}
+let pubs=[];
+function renderPubs(){const ul=$('pubList'); ul.innerHTML=''; $('pubWrap').hidden=!pubs.length; pubs.forEach(p=>ul.appendChild(li(p.nombre,TYPES[p.config.type]?TYPES[p.config.type].name:'',[['Abrir',()=>{applySnap(p.config,p.nombre); saveMsg(`Abriste “${p.nombre}” (público).`);}],['Enlace',()=>copyLink(linkFor(p.nombre,p.config),p.nombre)]])));}
+fetch('configs.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]).then(a=>{if(Array.isArray(a)){pubs=a.filter(p=>p&&p.nombre&&p.config&&TYPES[p.config.type]); renderPubs();}}).catch(()=>{});
+$('savesBtn').onclick=()=>{const p=$('saves'), open=p.hidden; p.hidden=!open; $('savesBtn').setAttribute('aria-expanded',String(open)); if(open){renderSaves(); p.scrollIntoView({block:'nearest',behavior:'smooth'}); $('saveName').focus();}};
+$('saveDo').onclick=()=>{const n=$('saveName').value.trim().replace(/\s+/g,' '); if(!n){saveMsg('Escribe un nombre para guardar el mueble.'); return;}
+  const a=loadSaves(), i=a.findIndex(x=>x.n.toLowerCase()===n.toLowerCase()), rec={n,t:Date.now(),c:snapshot()}; if(i>=0) a[i]=rec; else a.push(rec);
+  if(!storeSaves(a)){saveMsg('Este navegador no deja guardar (¿ventana privada?). Usa “Enlace”.'); return;} curName=n; $('curName').textContent=`Abierto: ${n}`; renderSaves(); saveMsg(i>=0?`Actualizaste “${n}”.`:`Guardaste “${n}”.`);};
+$('saveName').addEventListener('keydown',e=>{if(e.key==='Enter') $('saveDo').click();});
+function openFromUrl(){let q=null; try{q=new URLSearchParams(location.search).get('c');}catch(e){} if(!q) return;
+  try{const o=JSON.parse(b64d(q)); if(applySnap(o.c,o.n||'')){$('saves').hidden=false; renderSaves(); saveMsg(`Abriste “${o.n||'mueble compartido'}” desde un enlace. Toca Guardar para tenerlo en tu lista.`);}}catch(e){}}
+
+// ====================== Ciclo ======================
+function update(rebuild=true){
+  if(!cfg.type) return;
+  commonSegs(); syncCommon(); matCache={};
+  const R=compute(); current=R;
+  if(rebuild) renderMenus();
+  renderAll(R); build3D(R); save(); syncWood();
+}
+renderCatalog(); renderPrices(); init3D(); showTool(); if(cfg.type){update(); setView('iso');} openFromUrl();
+})();
+</script>
+
+</html>
